@@ -1,0 +1,14 @@
+# 让 Windows / macOS / Linux / CI 三端 checkout 结果一致
+* text=auto eol=lf
+
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.sh  text eol=lf
+
+*.png binary
+*.jpg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff2 binary

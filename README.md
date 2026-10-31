@@ -1,5 +1,7 @@
 # dsh-study-notes
 
+**简体中文** | [English](README.en.md)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![DeepSeek Harness plugin](https://img.shields.io/badge/DSH-plugin-6f42c1)](https://github.com/GamecialX/dsh-study-notes)
 
@@ -188,6 +190,7 @@ node assets/study-notes/scripts/check-library.mjs "<笔记根目录>" --json
 - `notes_data.js` 与 `.md` 的题目一致性只能做**宽松**核对（题干前 10 个实义字、分值序列、题目数量）。
   语义等价但措辞不同的题目不会被发现。
 - 安装后如果移动了本插件目录，符号链接会断掉，需要重新安装。
+
 ---
 
 ## 八、许可与致谢
