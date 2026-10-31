@@ -1,0 +1,22 @@
+# dependencies / installs
+node_modules/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+
+# secrets & local overrides — never commit these
+.env
+.env.*
+*.local
+.ssh/
+id_rsa*
+id_ed25519*
+
+# logs & scratch
+*.log
+npm-debug.log*
+*.tmp

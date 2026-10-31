@@ -1,0 +1,8 @@
+# Bundle patch for dsh-study-notes.
+#
+# One Host row provides the `study-notes` skill through the skill registry
+# (`ctx.skills`). It declares no dependencies, so it resolves offline and needs
+# no build step.
+- insert:
+    - id: study-notes
+      name: 'dsh-study-notes'

@@ -1,0 +1,52 @@
+{
+  "name": "dsh-study-notes",
+  "version": "1.0.0",
+  "description": "Study-notes skill provider: plan a syllabus, write Feynman-style chaptered notes in portable standard Markdown, and ship a local web learning portal with gradable tests.",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "icon": "./icon.svg",
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "icon.svg",
+    "locale/*.json",
+    "assets",
+    "test"
+  ],
+  "scripts": {
+    "test": "node test/verify-plugin.mjs && node test/check-fixture.mjs"
+  },
+  "author": "GamecialX <gamecialkaiju@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GamecialX/dsh-study-notes.git"
+  },
+  "homepage": "https://github.com/GamecialX/dsh-study-notes#readme",
+  "bugs": {
+    "url": "https://github.com/GamecialX/dsh-study-notes/issues"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "plugin",
+    "skill",
+    "study-notes",
+    "markdown",
+    "learning",
+    "teaching",
+    "notes"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

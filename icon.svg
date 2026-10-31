@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Study notes">
+  <defs>
+    <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a2029"/>
+      <stop offset="1" stop-color="#0a0d12"/>
+    </linearGradient>
+    <linearGradient id="page" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00e5ff"/>
+      <stop offset="1" stop-color="#0aa6c4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- chassis plate with cut corners -->
+  <path d="M12 2h40l10 10v40l-10 10H12L2 52V12z" fill="url(#plate)" stroke="#00e5ff" stroke-opacity=".55" stroke-width="2"/>
+  <!-- corner brackets -->
+  <path d="M2 20V12L12 2h8" fill="none" stroke="#ff9f1c" stroke-opacity=".85" stroke-width="2" stroke-linecap="square"/>
+  <path d="M62 44v8l-10 10h-8" fill="none" stroke="#ff9f1c" stroke-opacity=".85" stroke-width="2" stroke-linecap="square"/>
+
+  <!-- open book -->
+  <path d="M32 18c-5-4-11-5-17-5v30c6 0 12 1 17 5z" fill="url(#page)" fill-opacity=".18" stroke="url(#page)" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M32 18c5-4 11-5 17-5v30c-6 0-12 1-17 5z" fill="url(#page)" fill-opacity=".28" stroke="url(#page)" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M32 18v30" stroke="#00e5ff" stroke-width="2.5"/>
+
+  <!-- text lines -->
+  <g stroke="#d6deeb" stroke-opacity=".7" stroke-width="2" stroke-linecap="round">
+    <path d="M20 24h7M20 31h7"/>
+    <path d="M37 24h7M37 31h7"/>
+  </g>
+  <!-- progress tick -->
+  <path d="M25 41h14" stroke="#3ddc84" stroke-width="3" stroke-linecap="round"/>
+</svg>
