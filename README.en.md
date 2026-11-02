@@ -182,6 +182,22 @@ node assets/study-notes/scripts/run-course.mjs "<notes-root>" --python "py -3"  
 
 Both scripts prove **mechanical consistency** and "following the text actually works". They cannot prove **that the content is correct**, nor whether a reader knows what to do next. That is a human pass driven by `assets/study-notes/references/quality-gates.md` and the manual read-in-order test in section 12 of `teaching-design.md`.
 
+### 5.1 Teaching-line rules (T1–T5, new in v2.1)
+
+The R1–R11 rules of v2.0.0 guarantee that a reader can *follow* a section and build the artifact. In practice that is not enough: after such a section the reader may be able to name the next file to create, yet not say why the function exists or why it has to be written that way. v2.1 therefore adds a second line of rules, this time about the explanation itself:
+
+| Rule | Requirement |
+|---|---|
+| T1 explain before you build | a step title is a question or a topic ("Why can't a batch of numbers be a Python list?"); before the first hands-on block there are at least 8 lines (usually 20–60) explaining why this step exists and why it cannot be written any other way |
+| T2 concepts explained in place | a `### 概念 N` entry runs 40–120 lines: why it is needed → the same idea in maths or plain prose → one-sentence summary → definition → example → pitfalls. Not an API card |
+| T3 predict first | at least one "先想一下 / 先猜一猜" per section; after the reveal, explain what a wrong guess missed |
+| T4 read back | after every run, "刚才发生了什么" maps each line of output back to the explanation instead of pasting a result |
+| T5 prose over code | prose is not shorter than the code: code is the practice part, not the skeleton |
+
+**Important: in 2.1 the T1–T5 rules only ever report warnings; `--strict` does not promote them to errors.** The reason is that this repository's own fixtures and the existing libraries are still written as operation manuals, so enforcing them overnight would make migration impossible. Treat them as hard requirements when writing a new library; the next release can tighten them once the fixtures are rewritten in the four-beat form.
+
+`templates/section-note.md` and `references/teaching-design.md` have been rewritten around the four beats (think → explain → build → read back), so a new library written from the template satisfies T1–T5 naturally.
+
 ---
 
 ## 6. 老库怎么按新结构逐步迁移 (migrating an existing library step by step)
@@ -221,6 +237,13 @@ Count the findings per `[R*]` number to see which rules and which chapters carry
    It follows the text from an empty directory, runs every 【运行】, and writes `code/out/`, the output blocks in the text and `code/answer/chNN/`. Read the generated output: **when it disagrees with the prose, fix the prose, not the output**. A replay failure (a 【修改】 whose context cannot be found) means the text cannot be followed as written; fix it at the reported line.
 6. **Add the chapter ending (R6/R7)**: give the chapter's last section a "章末通跑" step (one command + bound real output) and a "本章项目地图" (a file tree containing `project/`, one line of responsibility per file, and "本章动了" listing the files this chapter touched).
 7. **Accept the chapter**: run `check-library.mjs "<library>" --strict --only "<each section of this chapter>"`, then `run-course.mjs "<library>"`. The chapter is migrated when it has 0 errors and every output matches. Log it in the changelog of `checklist.md`.
+
+**Step 2 supplement: thicken the explanation (T1–T5).** Changing only the skeleton and not the prose yields sections that can be followed but teach nothing — exactly what v2.1 exists to fix. This pass touches neither code nor saved output; start it by running `check-library.mjs` to see where `[T1]`–`[T5]` point:
+
+- turn each step title from a file operation into a question ("Create check.py" → "First, why can't a batch of numbers be a Python list?");
+- put 2–5 paragraphs in front of every hands-on block explaining why this step is needed now and why it must be written this way, upgrading the structural note into teaching;
+- grow concept entries from 15–40 lines to 40–120, adding "why it is needed" and what it is mathematically or conceptually;
+- pick one place per section to predict first (pose the question, let the reader answer, then reveal), and add "刚才发生了什么" after each run that maps the output back to the explanation.
 
 **Step 3: accept the whole library.** When every chapter is migrated, run `check-library.mjs "<library>" --strict` and `run-course.mjs "<library>"`. When both pass, the migration is done. Finish with one manual read-in-order test of a chapter: follow only the literal instructions, in an empty `project/`, to the end of the chapter.
 
