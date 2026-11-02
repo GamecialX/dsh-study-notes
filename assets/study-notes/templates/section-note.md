@@ -8,233 +8,257 @@ tags: [{{SUBJECT}}, 节笔记]
 
 # C{{CHAPTER_NO}} Sec_{{SECTION_NO}} {{SECTION_NAME}}
 
-<!-- 本模板的步骤示例（【新建】/【修改】/【重构】/【收口】/【运行】、project/、文件树）专供代码类 / 计算机类 / AI 类课程。
-     其他科目保留导读、接上一节、3–5 步、小结、练习、概念索引这些环节，步骤里用 <b>动手</b> / <b>你应该看到</b> / <b>为什么</b>，
-     具体写法有自由空间，按 references/subject-playbooks.md 的对应科目来；不用的代码示例整块删掉。 -->
+<!-- 这张模板是代码科目的版本。非代码科目（数学、语言、人文……）保留同样的环节与顺序，
+     只把「动手」换成 <b>动手</b>：在推导本 / 句子本 / 年表上写……，把「可见结果」换成 <b>你应该看到</b>：……。
+     讲解的比重不变：每个步骤仍然是「先想 → 讲 → 做 → 看」四拍。 -->
 
 > <b>*Note*</b>
-> 本节导读
+> **本节导读**
 >
-> <b>你现在手上</b>：{{WHAT_THE_LEARNER_HAS_NOW}}
+> <b>你现在手上</b>：{{CURRENT_STATE}}
+> <b>本节结束时</b>：{{END_STATE}}
 >
-> <b>本节结束时</b>：{{WHAT_IS_NEW_AT_THE_END}}
+> <b>本节要回答</b>
+> 1. {{QUESTION_1}}
+> 2. {{QUESTION_2}}
 >
 > 学完你能：
+> 1. 能解释{{EXPLAIN_1}}
+> 2. 能写出{{WRITE_2}}
+> 3. 能说清{{AWARE_3}}
 >
-> 1. {{OBJECTIVE_1}}
-> 2. {{OBJECTIVE_2}}
-> 3. {{OBJECTIVE_3}}
->
-> <b>前置</b>：{{PREREQUISITES_WITH_LINKS}}
-> <b>预计用时</b>：{{MINUTES}} 分钟 ｜ <b>难度</b>：{{DIFFICULTY}}
+> <b>前置</b>：{{PREREQ}} ｜ <b>预计用时</b>：{{MINUTES}} 分钟 ｜ <b>难度</b>：{{DIFFICULTY}}
 
-<!-- 你现在手上：上一节结束时 project/（或推导本、句子本……）里有什么，能做到什么、做不到什么。
-     本节结束时：多了哪几个文件 / 哪几条式子 / 哪几句话，多能做到什么。写具体的文件名。
-     学习目标 2–4 条，用可检验的动词（能手算 / 能解释 / 能写出 / 能区分），每条都要有练习对应。
-     预计用时 = 步骤数 × 10–20 分钟，30–100 之间；超了就拆节。
-     本文件里的 HTML 说明注释写完后删掉。 -->
+<!-- 导读三行缺一不可：手上有什么、结束时多了什么、本节回答哪几个问题。
+     问题写成真问题（「为什么一批数不能是 Python 列表」），不要写成任务（「新建 data.py」）。
+     用时 = 步数 × 10–20 分钟，30–100 之间；超了就拆节。 -->
 
 ## 接上一节
 
-<b>上一节做到</b>：{{PREVIOUS_SECTION_RESULT}}
+<!-- 全课第一节写：这是第一节，还没有「上一节」。本节要造的第一样东西是 {{FIRST_ARTIFACT}}。 -->
 
-<b>留下的坑</b>：{{THE_PROBLEM_LEFT_OPEN}}
+<b>上一节做到</b>：{{LAST_DONE}}
 
-<b>本节补上</b>：{{WHAT_THIS_SECTION_FIXES}}
+<b>留下的坑</b>：{{LAST_GAP}}
 
-<!-- 坑要具体：一个读者已经能感受到的问题，不是"本节将介绍 X"。全课第一节写"这是第一节"，并说明本节要造的第一样东西。 -->
+<b>本节补上</b>：{{THIS_FILLS}}
 
-## 第 1 步：{{STEP1_VERB_PHRASE}}
+---
 
-{{STEP1_WHY_THIS_STEP_NOW}}
+## 第 1 步：{{STEP1_QUESTION}}
 
-【新建】`project/{{STEP1_FILE}}`
+<!-- 标题是一个要回答的问题或一个知识主题，不是文件操作。
+     本节 3–5 步，编号连续；每步内部的顺序固定：先想 → 讲 → 做 → 看。 -->
+
+> <b>*Tip*</b>
+> 先想一下：{{THINK_PROMPT}}（想好再往下看，看完回来对一下。）
+
+{{STEP1_EXPLAIN}}
+
+<!-- 讲：至少 8 行，通常 20–60 行。要求：
+     ① 先说清这段要解决什么问题、不解决会怎样；
+     ② 原理与数学：定义、推导、量级估算、代价账（按科目取舍，数学类不要跳步）；
+     ③ 一个反例或一个容易走错的岔路；
+     ④ 结尾一句把话题交给下面的实践：「想清楚了，我们把它实现出来。」 -->
+
+【新建】`project/{{FILE}}`
 
 ```python
-{{STEP1_WHOLE_FILE}}
+{{FULL_FILE}}
 ```
 
 【运行】在 `project/` 里：
 
 ```bash
-{{STEP1_COMMAND}}
+{{RUN_COMMAND}}
 ```
 
 <!-- output: code/out/c{{CHAPTER_NO}}s{{SECTION_NO}}-1.txt -->
 ```text
-{{STEP1_REAL_OUTPUT}}
+{{REAL_OUTPUT}}
 ```
 
-<b>为什么这样做</b>：{{STEP1_WHY}}
+<b>刚才发生了什么</b>：{{READ_BACK}}
 
-<!-- 每一步：动作 → 可见的真实结果 → 为什么。标题是动词短语（"把核对写成一条测试"），不是名词。
-     【新建】放整份文件（≤ 120 行，不许省略）；输出由 run-course.mjs --write 真实运行后写入，不要手写。
-     非代码科目：动作写 <b>动手</b>：在推导本 / 句子本上……；结果写 <b>你应该看到</b>：……。 -->
+<!-- 看：3–10 行。逐条把输出对回上面的讲解——哪一行验证了哪句话、哪一行只是脚手架。
+     输出必须是 run-course.mjs 跑出来的，不许手写。 -->
 
-## 第 2 步：{{STEP2_VERB_PHRASE}}
-
-{{STEP2_INTRO}}
+<b>为什么这样做</b>：{{WHY_THIS}}
 
 ### 概念 1：{{CONCEPT1_NAME}}
 
-<b>一句话</b>：{{CONCEPT1_ONE_LINER_ABOUT_WHAT_THE_LEARNER_JUST_DID}}
+<!-- 概念就地展开，40–120 行，六件事按顺序讲：
+     为什么需要它 → 它在数学/原理上是什么 → 一句话 → 准确定义（Note）→ 例子 → 易错点（Warning）。
+     不要写成 API 卡片：读者读完要能说出「为什么非它不可」，而不只是「它怎么用」。 -->
+
+<b>为什么需要它</b>：{{CONCEPT1_WHY}}
+
+<b>它在数学上是什么</b>：{{CONCEPT1_MATH}}
+
+<b>一句话</b>：{{CONCEPT1_ONE_LINE}}
 
 > <b>*Note*</b>
-> {{CONCEPT1_TERM}} 的定义
+> **{{CONCEPT1_NAME}} 的定义**
 >
-> {{CONCEPT1_RIGOROUS_DEFINITION}}
+> {{CONCEPT1_DEFINITION}}
 
 <b>例子</b>：{{CONCEPT1_EXAMPLE}}
 
 > <b>*Warning*</b>
-> 易错点
->
-> {{CONCEPT1_COMMON_MISTAKE}}
+> {{CONCEPT1_PITFALL}}
 
-<!-- 概念在第一次需要它的这一步出现：一句话、定义、一个例子、一条易错点，通常 15–40 行。
-     讲完马上回到动作。一步最多一个概念，不要两个概念连排。 -->
+---
 
-【修改】`project/{{STEP2_FILE}}`：{{STEP2_WHAT_CHANGES}}
-
-```diff
- {{UNCHANGED_LINE_BEFORE}}
--{{REMOVED_LINE}}
-+{{ADDED_LINE}}
- {{UNCHANGED_LINE_AFTER}}
-```
-
-<!-- 【修改】用 diff：上下各留 1–2 行原样的上下文（行首一个空格），改动行以 - / + 开头。上下文在文件里必须只出现一次。 -->
+## 第 2 步：{{STEP2_QUESTION}}
 
 > <b>*Tip*</b>
-> 先猜一猜
->
-> {{PREDICT_QUESTION}}
+> 先猜一猜：{{GUESS_PROMPT}}
+
+{{STEP2_EXPLAIN}}
+
+<b>为什么现在轮到这一步</b>：{{WHY_THIS_STEP}}
+
+【修改】`project/{{FILE}}`：{{CHANGE_WHAT}}
+
+```diff
+ {{CONTEXT_BEFORE}}
+-{{OLD_LINE}}
++{{NEW_LINE}}
+ {{CONTEXT_AFTER}}
+```
+
+<!-- diff 规则：上下文行首一个空格，上下各 1–2 行，且这几行在文件里只能匹配到一处。 -->
 
 【运行】在 `project/` 里：
 
 ```bash
-{{STEP2_COMMAND}}
+{{RUN_COMMAND_2}}
 ```
 
 <!-- output: code/out/c{{CHAPTER_NO}}s{{SECTION_NO}}-2.txt -->
 ```text
-{{STEP2_REAL_OUTPUT}}
+{{REAL_OUTPUT_2}}
 ```
 
-<b>为什么是这个结果</b>：{{REVEAL_AND_WHY_PEOPLE_GUESS_WRONG}}
+<b>刚才发生了什么</b>：{{READ_BACK_2}}
 
-## 第 3 步：{{STEP3_VERB_PHRASE}}
+<b>为什么是这个结果</b>：{{WHY_RESULT_2}}（猜错的人错在哪：{{WHY_WRONG}}）
 
-{{STEP3_INTRO}}
+---
+
+## 第 3 步：{{STEP3_QUESTION}}
+
+{{STEP3_EXPLAIN}}
+
+<!-- 这一步故意让它坏掉：先让读者看到真实报错，再修。 -->
 
 【运行】在 `project/` 里：
 
 ```bash
-{{STEP3_COMMAND_THAT_FAILS}}
+{{RUN_COMMAND_3}}
 ```
 
 <!-- output: code/out/c{{CHAPTER_NO}}s{{SECTION_NO}}-3.txt -->
 ```text
-{{STEP3_REAL_FAILURE}}
+{{REAL_ERROR_OUTPUT}}
 ```
 
-现在是坏的：{{WHY_IT_IS_BROKEN}}
+<b>刚才发生了什么</b>：现在是坏的：{{WHAT_BROKE}}
 
-<!-- 每节至少一次"现在是坏的"：真实的报错、失败的测试、反例。先让读者撞上，再修。 -->
-
-【重构】`project/{{STEP3_FILE}}` 的 `{{FUNCTION_NAME}}`：{{WHY_REPLACE_THE_WHOLE_FUNCTION}}
+【重构】`project/{{FILE}}` 的 `{{FUNCTION}}`：{{REPAIR_WHY}}
 
 ```python
-{{WHOLE_FUNCTION_WITH_ORIGINAL_INDENT}}
+{{WHOLE_FUNCTION}}
 ```
 
 【运行】在 `project/` 里：
 
 ```bash
-{{STEP3_COMMAND}}
+{{RUN_COMMAND_4}}
 ```
 
 <!-- output: code/out/c{{CHAPTER_NO}}s{{SECTION_NO}}-4.txt -->
 ```text
-{{STEP3_REAL_OUTPUT}}
+{{REAL_OUTPUT_4}}
 ```
 
-<b>为什么这样修</b>：{{STEP3_WHY}}
+<b>刚才发生了什么</b>：{{READ_BACK_4}}
 
-【收口】`project/{{STEP3_FILE}}` 现在应该是这样，对不上就回头找漏掉的那一步：
+<b>为什么这样修</b>：{{REPAIR_EXPLAIN}}
+
+【收口】`project/{{FILE}}` 现在应该是这样，对不上就回头找漏掉的那一步：
 
 ```python
-{{STEP3_FILE_AS_IT_IS_NOW}}
+{{WHOLE_FILE}}
 ```
 
-<!-- 需要第 4、5 步时照上面的格式写。章末最后一节的最后一步是「章末通跑」：
-     ## 第 N 步：章末通跑：…  里面一个【运行】，一条命令从头跑完整个 project/，带真实输出。 -->
+<!-- 【收口】给出的内容必须和「照正文做到这里」的结果逐字一致。
+     章末（每章最后一节）把最后一步换成 `## 第 N 步：章末通跑：…`，一条命令跑完整个 project/，
+     并在 `## 本节小结` 之后加 `### 本章项目地图`：```text 文件树（每个文件一句话职责 + 「Sec_N 新建」标注）
+     + `<b>本章动了</b>：…。标准答案在 code/answer/chNN/，结构和 project/ 一样。` -->
+
+---
 
 ## 本节小结
 
 > <b>*Tip*</b>
 > 记住这些
 >
-> 1. {{POINT_1}}
-> 2. {{POINT_2}}
-> 3. {{POINT_3}}
-> 4. {{POINT_4}}
-> 5. {{POINT_5}}
-
-<b>留给下一节</b>：{{HOOK_NAMING_THE_NEXT_FILE_OR_ACTION}}
-
-<!-- 章末最后一节在这里加：
-### 本章项目地图
-
-```text
-project/
-├── {{FILE_A}}        {{ONE_LINE_ROLE}}（Sec_1 新建）
-└── {{FILE_B}}        {{ONE_LINE_ROLE}}（Sec_2 修改）
-```
-
-<b>本章动了</b>：{{FILES_CREATED_OR_CHANGED_THIS_CHAPTER}}。标准答案在 code/answer/chNN/，结构和 project/ 一样。 -->
-
-## 本节练习
-
-<!-- 3–5 题，难度递进：基础 → 应用 → 易错/辨析（最好就是本节坏掉的那个坑）→（可选）综合 →（可选）连接前面章节。
-     每条学习目标至少对应一题。题干与答案同步写进 notes_data.js 的 sections[].quiz（题干逐字一致，含行内代码）。 -->
-
-**1.**（目标 1）{{QUIZ1_QUESTION}}
-
-> <b>*Note*</b>
-> 答案与解析
+> 1. {{TAKEAWAY_1}}
+> 2. {{TAKEAWAY_2}}
+> 3. {{TAKEAWAY_3}}
+> 4. {{TAKEAWAY_4}}
+> 5. {{TAKEAWAY_5}}
 >
-> <b>答案</b>：{{QUIZ1_ANSWER}}
->
-> <b>解析</b>：{{QUIZ1_ANALYSIS}}
+> <b>留给下一节</b>：{{NEXT_HOOK}}
 
-**2.**（目标 2）{{QUIZ2_QUESTION}}
-
-> <b>*Note*</b>
-> 答案与解析
->
-> <b>答案</b>：{{QUIZ2_ANSWER}}
->
-> <b>解析</b>：{{QUIZ2_ANALYSIS}}
-
-**3.**（目标 3）{{QUIZ3_QUESTION}}
-
-> <b>*Note*</b>
-> 答案与解析
->
-> <b>答案</b>：{{QUIZ3_ANSWER}}
->
-> <b>解析</b>：{{QUIZ3_ANALYSIS}}
-
-## 概念索引
-
-1. [{{CONCEPT1_NAME}}](#{{CONCEPT1_ANCHOR}})
-
-<!-- 锚点规则：标题转小写 → 去掉 `*_~[]() → 其余连续空格与标点换成 - → 去首尾 -。
-     例：「概念 1：数值导数」→ 概念-1-数值导数。## 与 ### 算法一样。 -->
+<!-- 小结写「你现在能解释的几件事」，不是任务清单。留给下一节点名下一节要碰的文件或问题。 -->
 
 ---
 
-上一节：[C{{CHAPTER_NO}} Sec_{{PREV_NO}} {{PREV_NAME}}](C{{CHAPTER_NO}}%20Sec_{{PREV_NO}}%20{{PREV_NAME_URLENC}}.md) · 返回大纲：[00 大纲](../00%20%E5%A4%A7%E7%BA%B2.md) · 本章速查：[C{{CHAPTER_NO}} 速查](C{{CHAPTER_NO}}%20%E9%80%9F%E6%9F%A5.md) · 下一节：[C{{CHAPTER_NO}} Sec_{{NEXT_NO}} {{NEXT_NAME}}](C{{CHAPTER_NO}}%20Sec_{{NEXT_NO}}%20{{NEXT_NAME_URLENC}}.md)
+## 本节练习
 
-<!-- 首节省略「上一节」；末节把「下一节」换成「本章测试：[C… 测试](C…%20%E6%B5%8B%E8%AF%95.md)」。 -->
+**1.**（目标 1）{{EXERCISE_1}}
+
+> <b>*Note*</b>
+> **答案与解析**
+>
+> <b>答案</b>：{{ANSWER_1}}
+>
+> <b>解析</b>：{{ANALYSIS_1}}
+
+**2.**（目标 2）{{EXERCISE_2}}
+
+> <b>*Note*</b>
+> **答案与解析**
+>
+> <b>答案</b>：{{ANSWER_2}}
+>
+> <b>解析</b>：{{ANALYSIS_2}}
+
+**3.**（目标 3）{{EXERCISE_3}}
+
+> <b>*Note*</b>
+> **答案与解析**
+>
+> <b>答案</b>：{{ANSWER_3}}
+>
+> <b>解析</b>：{{ANALYSIS_3}}
+
+<!-- 题干必须和 web/notes_data.js 里 sections[].quiz 的 question 逐字一致（含行内代码）。
+     3–5 题，难度递进：先认（读代码说输出）→ 再改（补一行）→ 再写（自己写一个小函数）。 -->
+
+---
+
+## 概念索引
+
+<!-- 锚点规则：标题转小写 → 去掉 *_~\[]() 这些符号 → 连续空格与标点换成 - → 去首尾 -。
+     `概念 1：数值导数` → `#概念-1-数值导数`。## 与 ### 的规则一样。 -->
+
+1. [{{CONCEPT1_NAME}}](#概念-1-{{CONCEPT1_ANCHOR}})
+
+---
+
+[上一节]({{PREV_SECTION_URLENC}}.md) ｜ [返回大纲](../00%20%E5%A4%A7%E7%BA%B2.md) ｜ [本章速查]({{SHEET_URLENC}}.md) ｜ [下一节]({{NEXT_SECTION_URLENC}}.md)
+
+<!-- 导航行 URL 百分号编码；首节省略「上一节」，末节把「下一节」换成「本章测试」。 -->

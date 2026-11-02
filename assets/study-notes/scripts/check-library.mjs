@@ -325,6 +325,14 @@ function lint(rule, message, where) {
   (strict ? error : warn)(`[${rule}] ${message}`, where);
 }
 
+/**
+ * 讲解线规则（T1–T5）在 2.1 版一律只报 warning，--strict 也不升 error：
+ * fixture 与老库还是"操作手册"式讲法，先让新写的库达到要求，再逐库收紧。
+ */
+function hint(rule, message, where) {
+  warn(`[${rule}] ${message}`, where);
+}
+
 const CODE_LANGS = new Set([
   'python', 'py', 'python3', 'javascript', 'js', 'mjs', 'cjs', 'jsx', 'typescript', 'ts', 'tsx',
   'java', 'c', 'h', 'cpp', 'c++', 'cc', 'hpp', 'cs', 'csharp', 'go', 'rust', 'rs', 'ruby', 'rb',
@@ -497,6 +505,87 @@ function checkCourseLine(file, raw, rel, chapterNo, sectionNo, chapterName) {
   });
   if (thin.length) {
     lint('R1', `每一步都要有「动作 → 可见结果 → 为什么」：${thin.join('；')}。动作写【新建】/【修改】/【重构】/【收口】/【运行】或 <b>动手</b>：…；结果写 <b>你应该看到</b>：… 或绑定的真实输出。`, rel);
+  }
+
+  /* T1–T5：讲解线（先想 → 讲 → 做 → 看）。2.1 版只报 warning。
+     正文段落常是一整行长文，所以按字数折算"行"（40 字 ≈ 一行），不按物理行数。 */
+  const effLines = (chars) => Math.ceil(chars / 40);
+  const proseChars = (from, to) => {
+    let n = 0;
+    for (let i = from + 1; i < to; i += 1) {
+      if (p.inFence[i]) continue;
+      const t = (p.lines[i - 1] || '').trim();
+      if (!t || t.startsWith('#') || t.startsWith('<!--')) continue;
+      n += t.replace(/\s+/gu, '').length;
+    }
+    return n;
+  };
+  const firstActionLine = (from, to) => {
+    let line = null;
+    for (const op of p.ops) {
+      if (op.line > from && op.line < to && (line === null || op.line < line)) line = op.line;
+    }
+    for (let i = from + 1; i < to; i += 1) {
+      if (!p.inFence[i] && /<b>动手<\/b>/u.test(p.lines[i - 1] || '') && (line === null || i < line)) line = i;
+    }
+    return line;
+  };
+  const t1 = [];
+  for (const s of steps) {
+    const next = h2.find((h) => h.line > s.line && h.kind !== 'concept');
+    const to = next ? next.line : endOfSteps;
+    if (/【|新建|修改|重构|收口|运行|\.(?:py|js|ts|ipynb)\b|project[\\/]/u.test(s.text)) {
+      t1.push(`「第 ${s.line} 行的步骤标题写成了文件操作（${s.text}）」`);
+    }
+    const act = firstActionLine(s.line, to);
+    const before = effLines(proseChars(s.line, act || to));
+    if (before < 8) t1.push(`「第 ${act ? `${act} 行开始动手` : '整步'}之前只有约 ${before} 行讲解」`);
+  }
+  if (t1.length) {
+    hint('T1', `每一步都要先讲后做：${t1.slice(0, 4).join('；')}。标题写成本步要回答的问题或知识主题；动手之前至少 8 行（通常 20–60 行）讲清"为什么要做、为什么非这样写"。`, rel);
+  }
+
+  const t2 = [];
+  for (const h of p.heads.filter((x) => x.kind === 'concept')) {
+    const next = p.heads.find((x) => x.line > h.line);
+    const to = next ? next.line : total;
+    const seg = segmentText(p, h.line, to);
+    const n = effLines(proseChars(h.line, to));
+    const bad = [];
+    if (n < 24) bad.push(`正文约 ${n} 行（应 40–120 行）`);
+    if (!/为什么需要它|为什么需要/u.test(seg)) bad.push('没讲「为什么需要它」');
+    if (!/数学|原理|定义|推导/u.test(seg)) bad.push('没讲它在原理/数学上是什么');
+    if (bad.length) t2.push(`「${h.text}」（第 ${h.line} 行）${bad.join('、')}`);
+  }
+  if (t2.length) {
+    hint('T2', `概念要就地讲透：${t2.slice(0, 3).join('；')}。概念条目承担这一节的主要讲解量，不是 API 卡片。`, rel);
+  }
+
+  const sectionBody = segmentText(p, firstH2, endOfSteps);
+  if (!/先想一下|先猜一猜/u.test(sectionBody)) {
+    hint('T3', '这一节没有一处「先想一下 / 先猜一猜」：在讲清之前先抛个问题让读者自己回答，再揭晓答案。', rel);
+  } else if (!/猜错|错在哪|想错/u.test(sectionBody)) {
+    hint('T3', '「先猜一猜」之后要解释猜错的人错在哪：只说答案，读者不知道自己哪一步想偏了。', rel);
+  }
+
+  const t4 = [];
+  for (const s of steps) {
+    const next = h2.find((h) => h.line > s.line && h.kind !== 'concept');
+    const to = next ? next.line : endOfSteps;
+    const seg = segmentText(p, s.line, to);
+    if (!/刚才发生了什么|你应该看到|为什么呢|为什么是这个结果/u.test(seg)) t4.push(`第 ${/\d+/u.exec(s.text)[0]} 步`);
+  }
+  if (t4.length) {
+    hint('T4', `每一步跑完都要回看：${t4.join('、')}缺「<b>刚才发生了什么</b>」或「<b>你应该看到</b>」。输出要逐条对回刚才的讲解，而不只是贴一段结果。`, rel);
+  }
+
+  let codeLines = 0;
+  for (const f of p.fences) {
+    if (f.start > firstH2 && f.start < endOfSteps) codeLines += f.body.length;
+  }
+  const proseAll = effLines(proseChars(firstH2, endOfSteps));
+  if (codeLines > proseAll && proseAll > 0) {
+    hint('T5', `正文约 ${proseAll} 行，少于代码 ${codeLines} 行：讲解应是主体，代码是实践。把"为什么"讲够，再收短代码。`, rel);
   }
 
   /* R2：承接与钩子 */

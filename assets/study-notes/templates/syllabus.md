@@ -57,8 +57,9 @@ flowchart TD
 ## 三、章节目录
 
 <!-- 每章复制下面这一段。所有链接在内容生成后回填。章标题里不要放 ▸ 等装饰符号，锚点更稳。
+     本节要回答：这一节读完，读者能自己回答的一两个问题（写问题，不写任务）。
      本节产物：本节结束时 project/（或推导本、句子本……）里多出或改了什么，读者能自己验证。
-     动手入口：本节第一个动作（新建哪个文件 / 写下哪条式子 / 默写哪一句）。写不出这两列的节，回去重排。
+     动手入口：本节第一个动作（新建哪个文件 / 写下哪条式子 / 默写哪一句）。写不出这三列的节，回去重排。
      {{LEARNER_ARTIFACT}} 换成 project/、推导本、句子本、时间线……（见 references/subject-playbooks.md）。 -->
 
 ### 第 {{CHAPTER_NO}} 章 {{CHAPTER_NAME}}
@@ -66,10 +67,10 @@ flowchart TD
 > <b>一句话导读</b>：{{CHAPTER_BRIEF}}
 > <b>难度</b>：{{CHAPTER_DIFFICULTY}} ｜ <b>预计用时</b>：{{CHAPTER_HOURS}}
 
-| 节 | 标题 | 学完你能 | 本节产物 | 动手入口 |
-|---|---|---|---|---|
-| {{CHAPTER_NO}}.1 | [C{{CHAPTER_NO}} Sec_1 {{SEC1_NAME}}]({{CHAPTER_DIR_URLENC}}/C{{CHAPTER_NO}}%20Sec_1%20{{SEC1_NAME_URLENC}}.md) | {{SEC1_OBJECTIVES}} | {{SEC1_ARTIFACT}} | {{SEC1_FIRST_ACTION}} |
-| {{CHAPTER_NO}}.2 | [C{{CHAPTER_NO}} Sec_2 {{SEC2_NAME}}]({{CHAPTER_DIR_URLENC}}/C{{CHAPTER_NO}}%20Sec_2%20{{SEC2_NAME_URLENC}}.md) | {{SEC2_OBJECTIVES}} | {{SEC2_ARTIFACT}} | {{SEC2_FIRST_ACTION}} |
+| 节 | 标题 | 学完你能 | 本节要回答 | 本节产物 | 动手入口 |
+|---|---|---|---|---|---|
+| {{CHAPTER_NO}}.1 | [C{{CHAPTER_NO}} Sec_1 {{SEC1_NAME}}]({{CHAPTER_DIR_URLENC}}/C{{CHAPTER_NO}}%20Sec_1%20{{SEC1_NAME_URLENC}}.md) | {{SEC1_OBJECTIVES}} | {{SEC1_QUESTIONS}} | {{SEC1_ARTIFACT}} | {{SEC1_FIRST_ACTION}} |
+| {{CHAPTER_NO}}.2 | [C{{CHAPTER_NO}} Sec_2 {{SEC2_NAME}}]({{CHAPTER_DIR_URLENC}}/C{{CHAPTER_NO}}%20Sec_2%20{{SEC2_NAME_URLENC}}.md) | {{SEC2_OBJECTIVES}} | {{SEC2_QUESTIONS}} | {{SEC2_ARTIFACT}} | {{SEC2_FIRST_ACTION}} |
 
 <b>本章速查</b>：[C{{CHAPTER_NO}} 速查]({{CHAPTER_DIR_URLENC}}/C{{CHAPTER_NO}}%20%E9%80%9F%E6%9F%A5.md) ｜ <b>本章测试</b>：[C{{CHAPTER_NO}} 测试]({{CHAPTER_DIR_URLENC}}/C{{CHAPTER_NO}}%20%E6%B5%8B%E8%AF%95.md)
 
