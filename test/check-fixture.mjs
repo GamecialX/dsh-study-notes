@@ -1,13 +1,16 @@
 /**
  * 端到端验证 check-library.mjs：先造一份合规的示例学习库（应 0 error），
- * 再造一份注入了已知缺陷的库（应报出一批 error）。
+ * 再造一份注入了已知缺陷的库（应报出一批 error）；最后用渐进式样章
+ * test/fixtures/progressive-ch1 验证课程线规则 [R1]–[R11]：样章在 --strict 下 0 error，
+ * 每注入一个课程线缺陷，默认模式仍为 0（老库不被一次性判死）、--strict 为 1；
+ * 再用非代码样章 test/fixtures/math-ch1 确认课程线规则不要求 project/。
  *
  *   node test/check-fixture.mjs
  *
  * 退出码 0 = 校验器的通过/报错行为都符合预期。
  */
 
-import { mkdirSync, writeFileSync, readFileSync, rmSync, copyFileSync, existsSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, rmSync, copyFileSync, existsSync, cpSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -649,7 +652,116 @@ console.log('\n=== 样章模式：--only 只检查指定文件 ===');
   const run = spawnSync(process.execPath, [CHECKER, dir, '--only', SEC1], { stdio: 'inherit' });
   report('缺陷库里只查合规的 C1 Sec_1 → 退出码 0', run.status === 0, `exit ${run.status}`);
 }
-console.log('\n=== 清理 ===');
+console.log('\n=== 渐进式样章（test/fixtures/progressive-ch1）：--strict 应当 0 error ===');
+const SAMPLE = join(HERE, 'fixtures', 'progressive-ch1');
+const S1 = 'Cha_1 会求导的数/C1 Sec_1 工作台与数值导数.md';
+const S2 = 'Cha_1 会求导的数/C1 Sec_2 会自己求导的 Value.md';
+
+function buildSample(target) {
+  rmSync(target, { recursive: true, force: true });
+  cpSync(SAMPLE, target, { recursive: true });
+  for (const [from, to] of [
+    [join(SKILL, 'templates', 'web', 'index.html'), 'web/index.html'],
+    [join(SKILL, 'templates', 'web', 'serve.mjs'), 'web/serve.mjs'],
+    [join(SKILL, 'templates', '启动学习服务器.bat'), '启动学习服务器.bat'],
+    [join(SKILL, 'templates', 'start_server.sh'), 'start_server.sh']
+  ]) copyFileSync(from, join(target, to));
+}
+
+const checkerWith = (root, ...args) => spawnSync(process.execPath, [CHECKER, root, ...args], { stdio: 'inherit' });
+
+{
+  const dir = join(TEMP_ROOT, 'sample');
+  buildSample(dir);
+  report('样章 --strict → 退出码 0', checkerWith(dir, '--strict').status === 0);
+  report('样章 默认模式 → 退出码 0', checkerWith(dir).status === 0);
+  report('样章 --strict --only C1 Sec_1 → 退出码 0', checkerWith(dir, '--strict', '--only', S1).status === 0);
+  const replay = join(TEMP_ROOT, 'sample-replay');
+  checkerWith(dir, '--replay-to', replay);
+  const final = join(replay, 'ch01-final', 'project');
+  report('--replay-to 写出了第 1 章收口快照', existsSync(join(final, 'minigrad', 'value.py')));
+  report('收口快照与 code/answer/ch01 一致（value.py）',
+    existsSync(join(final, 'minigrad', 'value.py')) &&
+    readFileSync(join(final, 'minigrad', 'value.py'), 'utf8').replace(/\r\n/gu, '\n') ===
+    readFileSync(join(SAMPLE, 'code', 'answer', 'ch01', 'minigrad', 'value.py'), 'utf8').replace(/\r\n/gu, '\n'));
+  report('第 1 次【运行】的快照只有第 1 步建的两个文件',
+    existsSync(join(replay, 'c1s1-1', 'project', 'check.py')) && !existsSync(join(replay, 'c1s1-1', 'project', 'minigrad', 'numeric.py')));
+}
+
+console.log('\n=== 老写法的合规库在 --strict 下应当报 error（课程线规则升级）===');
+{
+  const dir = join(TEMP_ROOT, 'legacy-strict');
+  build(dir, false);
+  report('老写法合规库 --strict → 退出码 1', checkerWith(dir, '--strict').status === 1);
+}
+
+console.log('\n=== 课程线单项缺陷：默认模式只报 warning（退出码 0），--strict 报 error（退出码 1）===');
+const edit = (rel, fn) => (dir) => {
+  const file = join(dir, rel);
+  const before = readFileSync(file, 'utf8');
+  const after = fn(before);
+  if (after === before) throw new Error(`注入没有生效：${rel}`);
+  writeFileSync(file, after, 'utf8');
+};
+const courseDefects = [
+  ['[R4] 引用了晚于本章的答案', edit(S1, (s) => s.replace('## 本节小结', '想偷看可以打开 `code/answer/ch02/minigrad/value.py`。\n\n## 本节小结'))],
+  ['[R4] 代码块标着「节选」', edit(S1, (s) => s.replace('```python\nimport minigrad\n\nprint("minigrad", minigrad.__version__)\n```', '```python\n# 节选\nimport minigrad\n\nprint("minigrad", minigrad.__version__)\n```'))],
+  ['[R4] 正文代码块没有标签', edit(S1, (s) => s.replace('把公式写成框架里的第一个函数。', '```python\nprint((3.1 ** 2 - 2.9 ** 2) / 0.2)\n```\n\n把公式写成框架里的第一个函数。'))],
+  ['[R4] 让读者在 code/ 里建目录', edit(S1, (s) => s.replace('【新建】`project/minigrad/__init__.py`', '```bash\nmkdir -p code/minigrad\n```\n\n【新建】`project/minigrad/__init__.py`'))],
+  ['[R4] 【新建】的路径不在 project/ 下', edit(S1, (s) => s.replace('【新建】`project/minigrad/numeric.py`', '【新建】`code/minigrad/numeric.py`'))],
+  ['[R4] 【修改】的上下文在文件里找不到', edit(S1, (s) => s.replace(' print("minigrad", minigrad.__version__)\n+print("d(x*x)', ' print("minigrad", minigrad.version)\n+print("d(x*x)'))],
+  ['[R4] 【收口】与照做结果不一致', edit(S2, (s) => s.replace('    """包着一个浮点数的标量。后面会让它记住自己是怎么算出来的。"""\n\n    def __init__(self, data, _children=(), _op=""):', '    """包着一个浮点数的标量。"""\n\n    def __init__(self, data, _children=(), _op=""):'))],
+  ['[R4] code/answer/ch01 与重放结果不同构', edit('code/answer/ch01/check.py', (s) => `${s}print("answer only")\n`)],
+  ['[R4] code/answer/ch01 多出正文没建过的文件', (dir) => writeFileSync(join(dir, 'code', 'answer', 'ch01', 'extra.py'), 'print(1)\n', 'utf8')],
+  ['[R11] 正文里有本机绝对路径', edit(S1, (s) => s.replace('## 本节小结', '我的工程在 D:\\projects\\me\\project\\check.py。\n\n## 本节小结'))],
+  ['[R2] 缺少 ## 接上一节', edit(S2, (s) => s.replace('## 接上一节', '## 回顾'))],
+  ['[R5] 导读缺少「你现在手上」', edit(S2, (s) => s.replace('<b>你现在手上</b>', '<b>开始时</b>'))],
+  ['[R1] 步骤少于 3 个', edit(S1, (s) => s.replace('## 第 3 步：把核对写成一条测试', '### 再把核对写成一条测试'))],
+  ['[R3] 全库混用 ## 与 ### 概念', edit(S1, (s) => s.replace('### 概念 1：数值导数', '## 概念 1：数值导数'))],
+  ['[R6] 章末没有通跑', edit(S2, (s) => s.replace('## 第 4 步：章末通跑：用尺子量 backward', '## 第 4 步：用尺子量 backward'))],
+  ['[R7] 章末没有项目地图', edit(S2, (s) => s.replace('### 本章项目地图', '### 本章文件'))],
+  ['[R8] notebook 带着输出', edit('code/notebooks/C1_差商的步长.ipynb', (s) => s.replace('"outputs": []', '"outputs": [{"output_type": "stream", "name": "stdout", "text": ["x"]}]'))],
+  ['[R10] 预计用时超过 100 分钟', edit(S1, (s) => s.replace('<b>预计用时</b>：45 分钟', '<b>预计用时</b>：180 分钟'))]
+];
+for (const [name, inject] of courseDefects) {
+  const dir = join(TEMP_ROOT, 'course');
+  buildSample(dir);
+  try { inject(dir); } catch (e) { report(`${name} → 缺陷已注入`, false, e.message); continue; }
+  const loose = checkerWith(dir).status;
+  const strictRun = checkerWith(dir, '--strict').status;
+  report(`${name} → 默认 0 / --strict 1`, loose === 0 && strictRun === 1, `默认 exit ${loose}，--strict exit ${strictRun}`);
+}
+console.log('\n=== 非代码样章（test/fixtures/math-ch1，数学推导本）：没有 project/ 也能在 --strict 下 0 error ===');
+const MATH = join(HERE, 'fixtures', 'math-ch1');
+const M1 = 'Cha_1 等差数列/C1 Sec_1 通项与求和.md';
+function buildMath(target) {
+  rmSync(target, { recursive: true, force: true });
+  cpSync(MATH, target, { recursive: true });
+  for (const [from, to] of [
+    [join(SKILL, 'templates', 'web', 'index.html'), 'web/index.html'],
+    [join(SKILL, 'templates', 'web', 'serve.mjs'), 'web/serve.mjs'],
+    [join(SKILL, 'templates', '启动学习服务器.bat'), '启动学习服务器.bat'],
+    [join(SKILL, 'templates', 'start_server.sh'), 'start_server.sh']
+  ]) copyFileSync(from, join(target, to));
+}
+{
+  const dir = join(TEMP_ROOT, 'math');
+  buildMath(dir);
+  report('非代码样章 --strict → 退出码 0', checkerWith(dir, '--strict').status === 0);
+}
+const mathDefects = [
+  ['[R7] 非代码样章的产物地图缺「本章动了」', edit(M1, (s) => s.replace('<b>本章动了</b>：推导本第 1–3 页，全部是本章新写的。', '推导本第 1–3 页都是本章写的。'))],
+  ['[R7] 非代码样章的产物地图没有目录', edit(M1, (s) => s.replace(/- 第 1 页：[^\n]*\n- 第 2 页：[^\n]*\n- 第 3 页：[^\n]*\n/u, '推导本写了三页。\n'))],
+  ['[R1] 非代码样章的一步缺「你应该看到」', edit(M1, (s) => s.replace('<b>你应该看到</b>：四个差都是 4。', '四个差都是 4。'))]
+];
+for (const [name, inject] of mathDefects) {
+  const dir = join(TEMP_ROOT, 'math-defect');
+  buildMath(dir);
+  try { inject(dir); } catch (e) { report(`${name} → 缺陷已注入`, false, e.message); continue; }
+  const loose = checkerWith(dir).status;
+  const strictRun = checkerWith(dir, '--strict').status;
+  report(`${name} → 默认 0 / --strict 1`, loose === 0 && strictRun === 1, `默认 exit ${loose}，--strict exit ${strictRun}`);
+}console.log('\n=== 清理 ===');
 rmSync(TEMP_ROOT, { recursive: true, force: true });
 report('临时目录已清理', !existsSync(TEMP_ROOT));
 

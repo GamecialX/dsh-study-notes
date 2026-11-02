@@ -1,0 +1,8 @@
+test_cube (test_numeric.TestNumericGrad.test_cube) ... ok
+test_square (test_numeric.TestNumericGrad.test_square) ... ok
+test_matches_numeric_grad (test_value.TestBackward.test_matches_numeric_grad) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK

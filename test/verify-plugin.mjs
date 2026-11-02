@@ -36,6 +36,9 @@ section('1. 语法检查');
 for (const file of [
   join(PKG, 'index.js'),
   join(SKILL_DIR, 'scripts', 'check-library.mjs'),
+  join(SKILL_DIR, 'scripts', 'run-course.mjs'),
+  join(HERE, 'check-fixture.mjs'),
+  join(HERE, 'run-sample.mjs'),
   join(SKILL_DIR, 'templates', 'web', 'serve.mjs'),
   join(SKILL_DIR, 'templates', 'callout-to-blockquote.mjs'),
   join(SKILL_DIR, 'templates', 'fix-math-delims.mjs'),
@@ -281,7 +284,8 @@ for (const rel of [
   'templates/web/index.html',
   'templates/web/notes_data.js',
   'templates/web/serve.mjs',
-  'scripts/check-library.mjs'
+  'scripts/check-library.mjs',
+  'scripts/run-course.mjs'
 ]) {
   let size = 0;
   try { size = readFileSync(join(SKILL_DIR, rel), 'utf8').length; } catch { /* missing */ }

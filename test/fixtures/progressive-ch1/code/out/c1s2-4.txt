@@ -1,0 +1,7 @@
+minigrad 0.1.0
+d(x*x)/dx at x=3: 6.000000000039306
+Value(data=-4.0, grad=0.0)
+Value(data=3.0, grad=0.0)
+c = -4.0 op: + inputs: [-6.0, 2.0]
+a.grad = -2.0 b.grad = 2.0
+again: a.grad = -7.0 b.grad = 6.0

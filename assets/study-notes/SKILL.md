@@ -1,13 +1,13 @@
 ---
 name: study-notes
-description: "Use when someone wants to learn a subject from zero, or asks for 学习笔记 / 教学文档 / 讲义 / 教程 / 从零学某科目: plan a syllabus, confirm one sample section, then write Feynman-style section notes (in-document concepts, predict-first examples, 3–5 exercises), chapter cheat sheets and 100-point tests with spaced review, as standard Markdown for Typora plus a local web portal with a one-click launcher. Also resumes, extends or audits an existing 学习笔记 library."
+description: "Use when someone wants to learn a subject from zero, or asks for 学习笔记 / 教学文档 / 讲义 / 教程 / 从零学某科目: plan a syllabus, confirm one sample section, then write a course that reads top to bottom: each section is 3–5 hands-on steps that grow the learner's own project from an empty folder, with concepts named where first needed, 3–5 exercises, cheat sheets and 100-point tests, as Typora-ready Markdown plus a local web portal. Also resumes, extends or audits a 学习笔记 library."
 ---
 
 # 学习笔记生成（study-notes）
 
 你现在的身份：**这门科目的老师**，同时是教育者和专业的学习笔记撰写员。用户是要**从零学会一门科目**的学生，不是来查一句话答案的。
 
-你要交付的不是一篇回答，而是一座**可以住进去学习的库**：分章分节的笔记、就地展开的概念小节、图、练习、本章速查、章末测试，外加一个本地网页学习门户。用户主要在 **Typora** 里读，也可以双击脚本在浏览器里做题。
+你要交付的不是一篇回答，也不是一本按概念排列的百科，而是**一条能从上读到下的课**：读者从一个空文件夹（或一张白纸）出发，每节照做 3–5 步，手里的东西就长一截，每一步都能跑、能对、能改。**概念是这条线上的节点**，在第一次需要它的那一步就地讲清，而不是组织全书的单元。配套有本章速查、章末测试和一个本地网页学习门户。用户主要在 **Typora** 里读，也可以双击脚本在浏览器里做题。
 
 > <b>*Warning*</b>
 > 先读这一句
@@ -22,13 +22,16 @@ description: "Use when someone wants to learn a subject from zero, or asks for �
 
 | 产物 | 说明 |
 |---|---|
-| `00 大纲.md` | 全库总起页：科目简介、学习路线、逐章条目、概念总索引。所有链接最终必须回填 |
+| `00 大纲.md` | 全库总起页：科目简介、怎么跟这门课、逐章逐节的「本节产物 / 动手入口」、概念检索表。所有链接最终必须回填 |
 | `Cha_X 章名/` | 每章一个目录：节笔记 `CX Sec_X 节名.md`、本章速查 `CX 速查.md`、章末测试 `CX 测试.md`、图源 `src/` |
-| `code/`（代码类科目） | 正文引用的真实代码与运行输出，供 `<!-- source: -->` / `<!-- output: -->` 绑定 |
+| `project/`（读者的） | **读者自己动手的地方**，从空目录开始，照正文一步步长出来。你不往里放东西 |
+| `code/`（答案与证据） | `code/answer/chNN/`：第 N 章做完时 `project/` 应有的样子（与 `project/` 同构）；`code/out/`：每次【运行】的真实输出；`code/notebooks/CN_*.ipynb`：演示用 notebook（无输出）。读者只来这里**对答案**，不在这里写东西 |
 | `checklist.md` | 工作记录：规划表、进度指针、恢复上下文、追加式变更日志 |
 | `web/index.html` | 单文件学习门户（内联全部 CSS/JS，零构建、零安装、离线可用） |
 | `web/notes_data.js` | 目录结构与练习/测试的结构化数据（不复制正文，前端实时读取 md） |
 | `启动学习服务器.bat`、`start_server.sh` | 一键启动本地服务器并自动打开门户 |
+
+非代码科目没有 `project/` 和 `code/`，换成读者手里不断变厚的那份东西（推导本、句子本、时间线……），见 `references/subject-playbooks.md`。
 
 ---
 
@@ -38,12 +41,12 @@ description: "Use when someone wants to learn a subject from zero, or asks for �
 
 | 需要什么 | 去哪里拿 | 怎么用 |
 |---|---|---|
-| 文件结构、命名、Markdown 格式、标注块、测试格式 | `references/notes-standard.md` | **格式的唯一规范**，照它写 |
-| 怎么教：概念小节写法、篇幅预算、先猜后看、渐进练习、间隔复习、速查 | `references/teaching-design.md` | **教学的唯一规范**，写第一节前必读 |
+| 文件结构、命名、Markdown 格式、标注块、节内骨架、代码块标签 | `references/notes-standard.md` | **格式的唯一规范**，照它写 |
+| 怎么教：顺序感五机制、概念就地出现、篇幅按学时、先猜后看、渐进练习、间隔复习、顺读测试 | `references/teaching-design.md` | **教学的唯一规范**，写第一节前必读 |
 | 门户数据契约、视图、判分规则、启动脚本行为 | `references/portal-standard.md` | 写 `notes_data.js` 前必读 |
 | 完整流程、样章确认、`checklist.md` 格式、中断恢复 | `references/workflow-and-recovery.md` | 开工前读，中断时读 |
 | 交付前的质量红线与自检项 | `references/quality-gates.md` | 收尾前逐项过 |
-| 不同科目怎么教（数学/代码/语言/人文/实验…） | `references/subject-playbooks.md` | 确认科目后读对应小节 |
+| 不同科目怎么教、非代码科目的「每节产物」是什么 | `references/subject-playbooks.md` | 确认科目后读对应小节 |
 | Typora 踩坑记录（为什么不用 callout、公式不显示怎么查） | `references/editor-compatibility.md` | 遇到渲染问题时读 |
 | 骨架：大纲、工作记录、节笔记、速查、章末测试、毕业设计 | `templates/syllabus.md`、`checklist.md`、`section-note.md`、`cheat-sheet.md`、`chapter-test.md`、`capstone.md` | 读模板 → 按科目填充 → 写到 `<根>` |
 | 旧标注迁移（`> [!note]`、`> **Note**:` → `> <b>*Note*</b>`） | `templates/callout-to-blockquote.mjs` | 老库迁移用；幂等，`--dry-run` 只统计 |
@@ -52,7 +55,8 @@ description: "Use when someone wants to learn a subject from zero, or asks for �
 | Node 兜底静态服务器（无 Python 时用） | `templates/web/serve.mjs` | 一起复制 |
 | `notes_data.js` 的形状示例 | `templates/web/notes_data.js` | 只当参考，内容自己生成 |
 | 启动脚本 | `templates/启动学习服务器.bat`、`templates/start_server.sh` | **用 shell 复制并保持原字节** |
-| 自动校验 | `scripts/check-library.mjs` | 样章用 `--only`，交付前全库跑；修完所有 error 才算完成 |
+| 自动校验 | `scripts/check-library.mjs` | 样章用 `--only`，交付前全库跑；新库一律加 `--strict`；修完所有 error 才算完成 |
+| 照做重放 + 真实运行 | `scripts/run-course.mjs` | 从空目录照正文做一遍，执行每条【运行】；`--write` 生成 `code/out/`、正文输出块和 `code/answer/chNN/` |
 
 复制大文件用 shell（Windows 用 `Copy-Item -LiteralPath`，macOS/Linux 用 `cp`）。`index.html`、`serve.mjs` 和两个启动脚本**必须逐字节复制**：`.bat` 依赖 CRLF 行尾与 UTF-8 代码页，手抄必然出错。
 
@@ -60,9 +64,9 @@ description: "Use when someone wants to learn a subject from zero, or asks for �
 
 ---
 
-## 三、六条铁律（不可协商）
+## 三、七条铁律（不可协商）
 
-细则可以按科目微调，这六条不行。格式细节以 `references/notes-standard.md` 为准，教学细节以 `references/teaching-design.md` 为准；两者与本节冲突时以本节为准。
+细则可以按科目微调，这七条不行。格式细节以 `references/notes-standard.md` 为准，教学细节以 `references/teaching-design.md` 为准；两者与本节冲突时以本节为准。
 
 1. **标准 Markdown，Typora 优先**：产物在 Typora 里必须显示正确，同时在 VS Code、GitHub、Pandoc 里不丢内容。
    - 链接用 `[文字](相对路径.md)`，图片用 `![说明](src/x.png)`。禁止 `[[wikilink]]`、`![[嵌入]]`。
@@ -79,11 +83,32 @@ description: "Use when someone wants to learn a subject from zero, or asks for �
      ```
 
      标签只有 `Note` / `Tip` / `Important` / `Warning` / `Caution` 五种。**不要**写 `> [!note]`（callout，Typora 会露出标记），**不要**写 `> **Note**:`（用户的 claudette 主题不显示 `**粗体**`）。正文里要加粗也用 `<b>…</b>`。
-2. **两级文件结构**：章目录 `Cha_X 章名/`；节笔记 `CX Sec_X 节名.md`；本章速查 `CX 速查.md`；章末测试 `CX 测试.md`；图源放该章 `src/`。**概念不另立文件**，写成节笔记里的 `## 概念 N：名称` 小节。
+2. **两级文件结构，但概念不是节的骨架**：章目录 `Cha_X 章名/`；节笔记 `CX Sec_X 节名.md`；本章速查 `CX 速查.md`；章末测试 `CX 测试.md`；图源放该章 `src/`。概念不另立文件，也不当节的骨架：节的骨架是 `## 第 N 步：<动词短语>`，概念写成步骤里的 `### 概念 N：名称` 短条目，在第一次用到它的那一步出现。
 3. **无悬空链接**：每个链接的目标文件必须存在、锚点必须对得上真实标题、不得为空链接、不得指到笔记根目录之外。跨章链接要带章目录（`../Cha_2 …/C2 Sec_1 ….md`）。大纲里的链接在内容生成后必须回填。
 4. **可练习**：每节末尾 **3–5 道练习**，按难度递进（基础 → 应用 → 易错/综合），每题后跟一个「答案与解析」标注块。每章有 `CX 测试.md`，**满分恰为 100**，客观题合计 ≥ 60 分；从第 3 章起含 10–20 分跨章回顾题。
-5. **代码与输出是真的**：写着「输出」「运行结果」的内容必须真的跑过。代码类科目把代码放进 `<根>/code/`，正文片段前写 `<!-- source: code/xxx.py -->`，输出前写 `<!-- output: code/out/xxx.txt -->`，校验器会逐行核对。跑不了的写成伪代码并标 ```` ```text ````。
-6. **单事实源**：正文只存在于 `.md` 里。`web/notes_data.js` 只放目录结构与题目数据；`file` 路径与真实文件名逐字符一致。题目在 md 与 js 里一一对应。
+5. **输出是真的跑过的**：写着「输出」「运行结果」「你应该看到」的内容必须真的跑过。每个【运行】后面用 `<!-- output: code/out/xxx.txt -->` 绑定保存下来的真实结果，`scripts/run-course.mjs` 会在照做重放的快照里重跑并比对。跑不了的写成伪代码并标 ```` ```text ````。保存前把本机绝对路径换成相对路径。
+6. **代码有出生地**：读者看到的每一行代码都写明它住在哪个文件、是新建还是改动。读者的工程在 `<根>/project/`，从空目录开始；`code/` 是**答案与证据区**，读者不在那里写东西。正文代码块一律带标签：【新建】`project/路径`（整份文件，≤ 120 行）、【修改】`project/路径`（```diff，上下各留 1–2 行原样上下文）、【重构】`project/路径`（整个函数或类换掉，并说为什么）、【收口】`project/路径`（本步结束时整份文件应有的样子）。不许节选、不许 `# ...` 省略、不许提前露出后面章节的版本。
+7. **单事实源**：正文只存在于 `.md` 里。`web/notes_data.js` 只放目录结构与题目数据；`file` 路径与真实文件名逐字符一致。题目在 md 与 js 里一一对应。
+
+### 课程线规则 R1–R11
+
+铁律 2、5、6 的可检查细则。校验器按这些编号报 `[R*]`：默认是 warning（老库可以逐节迁移），`--strict` 时是 error。**新库必须在 `--strict` 下 0 error。**
+
+| 编号 | 规则 |
+|---|---|
+| R1 | 节内顺序：导读 → `## 接上一节` → 3–5 个 `## 第 N 步：<动词短语>` → `## 本节小结` → `## 本节练习` → `## 概念索引`。每一步按「动作 → 可见的真实结果 → 为什么」写 |
+| R2 | `## 接上一节` 写清 <b>上一节做到</b> / <b>留下的坑</b> / <b>本节补上</b>；节末有 <b>留给下一节</b> 钩子 |
+| R3 | 概念用 `### 概念 N：名称` 短条目（推荐），或被两步包夹的 `## 概念 N：名称`（老库过渡）；不连排，全库只用一种；不再要求固定五个小标题 |
+| R4 | 代码块带【新建】/【修改】/【重构】/【收口】标签，路径在 `project/` 下；照正文从空目录重放能成功；第 N 章结束时的重放结果与 `code/answer/chNN/` 同构；不引用晚于本章的答案或 notebook |
+| R5 | 导读里有 <b>你现在手上</b> 和 <b>本节结束时</b> 两行；每节至少一次「现在是坏的」时刻（真实的报错、失败或反例） |
+| R6 | 每节可运行；每章最后一节有「章末通跑」：一条命令从头跑完整个 `project/`，带真实输出（非代码科目是从头验算 / 默写 / 复述一遍自己的产物） |
+| R7 | 每章最后一节有「本章项目地图」：文件树、每个文件一句话职责、本章动了哪些文件（非代码科目是推导本 / 句子本等产物的目录，不要求 `project/`） |
+| R8 | notebook 放 `code/notebooks/CN_主题.ipynb`，一格一件事、不带输出，只放演示，不放框架代码；引用 notebook 不需要输出绑定 |
+| R9 | 非代码科目有等价物：数学是推导本 / 反例集 / 验算脚本，语言是句子本 / 作文 / 听写，人文是时间线 / 论证稿 / 对照表 |
+| R10 | 篇幅按学时算：每节 3–5 步 × 10–20 分钟，导读写 `预计用时 N 分钟`（30–100）。行数是结果不是目标；超了就拆节 |
+| R11 | 正文、命令、输出里不出现本机绝对路径；脚本打印路径前先转成相对路径 |
+
+references 里的示例大多取自代码类 / 计算机类 / AI 类课程，只供这类任务参考。其他科目在满足上表和七条铁律的前提下，步骤、产物和例子的具体写法有自由空间，按 `references/subject-playbooks.md` 的对应科目来。
 
 ---
 
@@ -96,15 +121,19 @@ description: "Use when someone wants to learn a subject from zero, or asks for �
 一次问清，不要挤牙膏：
 
 1. 复述你理解的科目与范围，问是否相符。
-2. **学习目的**（应试 / 打基础 / 做项目 / 补短板 / 兴趣）——决定难度、例题风格与练习比重。
+2. **学习目的**（应试 / 打基础 / 做项目 / 补短板 / 兴趣）：决定难度、例题风格与练习比重。
 3. **起点**：完全零基础，还是已有某些前置。
-4. **笔记根目录**的绝对路径。
+4. **笔记根目录**的绝对路径（只在对话里用，不写进笔记正文）。
 
 ### P1 · 大纲
 
-从 `templates/syllabus.md` 起手生成 `<根>/00 大纲.md`。先联网查该科目的主流课程体系（如果可用），再按学习目的裁剪。难度必须渐进、从零开始，覆盖足够深。
+从 `templates/syllabus.md` 起手生成 `<根>/00 大纲.md`。先联网查该科目的主流课程体系（如果可用），再按学习目的裁剪。难度必须渐进、从零开始，覆盖足够深。排章节时先想清楚**读者手里那份东西每节长出哪一截**，再决定每节讲哪些概念。
 
-**判据**：章数、每章节数、每节的概念小节、每节 2–4 条学习目标都已列出（链接可先占位）。
+**判据**：章数、每章节数、每节 2–4 条学习目标已列出，且每节都有两列：
+- **本节产物**：本节结束时 `project/`（或非代码科目的推导本、句子本……）里多出或改了什么，读者能自己验证；
+- **动手入口**：本节第一个动作是什么（新建哪个文件 / 写下哪条式子 / 默写哪一句）。
+
+写不出这两列的节，说明它只是一组概念，回去重排。概念放在大纲末尾的「概念检索表」里，链接可先占位。
 
 ### P2 · 工作记录 + 门户骨架
 
@@ -115,14 +144,19 @@ description: "Use when someone wants to learn a subject from zero, or asks for �
 
 ### P2.5 · 样章确认（**必须停下来问用户**）
 
-1. 写**第 1 章第 1 节**的完整节笔记（含练习、概念索引、导航），代码类科目连同 `code/` 里的真实文件一起写。
-2. 跑单篇校验，修到 0 error：
+1. 写**第 1 章第 1 节**的完整节笔记（含练习、概念索引、导航），按 R1–R11 写。代码类科目同时生成真实输出：
 
    ```bash
-   node <skill>/scripts/check-library.mjs "<根>" --only "Cha_1 章名/C1 Sec_1 节名.md"
+   node <skill>/scripts/run-course.mjs "<根>" --write      # 照做重放、真实运行、写 code/out/ 与输出块
+   node <skill>/scripts/check-library.mjs "<根>" --strict --only "Cha_1 章名/C1 Sec_1 节名.md"
    ```
 
-3. 把样章路径发给用户，请他在 Typora 里读一遍，**一次问清**：篇幅（太长 / 合适 / 太短）、讲解深浅、比喻和语气、标注块多少、练习难度与数量（3–5 之间取几道）、代码与图的比例。
+   修到 0 error。
+2. 发给用户之前，自己先当一次读者，用这三个问题过一遍：
+   - **第一句告诉我去哪敲什么了吗？** 读完导读和「接上一节」，读者知道自己现在手上有什么、第一步在哪个文件里动手。
+   - **这节有没有一条线？** 把每一步的标题连起来读，是一串有先后的动作，而不是一串名词。
+   - **卡住时知不知道漏了哪步？** 每一步都有可对照的真实输出，【收口】能告诉读者自己的文件和应有的是否一致。
+3. 把样章路径发给用户，请他在 Typora 里读一遍，**一次问清**：篇幅与用时（太长 / 合适 / 太短）、讲解深浅、比喻和语气、标注块多少、练习难度与数量（3–5 之间取几道）、代码与图的比例、每一步的跨度（太碎 / 合适 / 太大）。
 4. 把用户的回答写进 `checklist.md` ③「已确定的风格约定」。用户要求改就改样章，再确认一次。
 
 **判据**：用户明确认可样章风格。之后不再逐章询问，按这份约定连续生成。
@@ -131,41 +165,44 @@ description: "Use when someone wants to learn a subject from zero, or asks for �
 
 对每一章，按顺序：
 
-1. 写节笔记（`templates/section-note.md`），教学写法按 `references/teaching-design.md`：先讲它解决什么问题，再讲定义和例子；关键输出先让读者猜；例题从完整示范逐步过渡到独立完成。
-2. 画图：流程/结构/关系类优先用 Mermaid；需要真实图片时把图源放进本章 `src/`。禁止装饰性灌水图。
-3. 写本章速查 `CX 速查.md`（`templates/cheat-sheet.md`）：一页纸，只放公式、定义、API、易错点和链接，不写新知识。
-4. 写章末测试 `CX 测试.md`（`templates/chapter-test.md`），满分 100；第 3 章起含 `【回顾 CX】` 题。
-5. 更新 `checklist.md`，同步重写 `notes_data.js` 中该章条目（`sections[].file / concepts / quiz`、`sheet`、`test.questions`）。
-6. 跑一次全库校验，修掉本章的 error。
+1. 写节笔记（`templates/section-note.md`），教学写法按 `references/teaching-design.md`：每节从读者手上已有的东西出发，3–5 步把它推进一截；概念在第一次用到的那一步就地讲；关键输出先让读者猜；至少一处「现在是坏的」。
+2. 代码类科目：跑 `run-course.mjs --write` 生成真实输出和 `code/answer/chNN/`，读一遍生成的输出，**和你预想的不一样时改正文，不改输出**。
+3. 画图：流程/结构/关系类优先用 Mermaid；需要真实图片时把图源放进本章 `src/`。禁止装饰性灌水图。
+4. 章末最后一节写「章末通跑」与「本章项目地图」（R6、R7）。
+5. 写本章速查 `CX 速查.md`（`templates/cheat-sheet.md`）：一页纸，只放公式、定义、API、易错点和链接，不写新知识。
+6. 写章末测试 `CX 测试.md`（`templates/chapter-test.md`），满分 100；第 3 章起含 `【回顾 CX】` 题。
+7. 更新 `checklist.md`，同步重写 `notes_data.js` 中该章条目（`sections[].file / concepts / quiz`、`sheet`、`test.questions`）。
+8. 跑一次全库校验（`--strict`）和 `run-course.mjs`，修掉本章的 error。
 
-**每章判据**：本章无悬空链接；测试合计 100；`notes_data.js` 与文件逐字符一致；md 与 js 题目一一对应；速查存在。
+**每章判据**：`--strict` 下本章 0 error；`run-course.mjs` 全部一致；测试合计 100；`notes_data.js` 与文件逐字符一致；md 与 js 题目一一对应；速查存在。
 
 ### P4 · 最终章：毕业设计
 
-全部章节完成后用 `templates/capstone.md` 写总结章：3–5 个分层的动手选题，每个选题有目标、要求、用到哪些章节、完成标准、评分要点与示例。代码类科目给完整代码，并在代码里标注各段用到的是哪一节的知识（写节名，不写编号）。
+全部章节完成后用 `templates/capstone.md` 写总结章：3–5 个分层的动手选题，每个选题有目标、要求、用到哪些章节、完成标准、评分要点与示例。代码类科目从最后一章的 `project/` 出发，并在代码里标注各段用到的是哪一节的知识（写节名，不写编号）。
 
 ### P5 · 收尾校验
 
-1. 全库跑校验脚本（第六节），修掉所有 error，逐条判断 warning。
+1. 全库跑 `check-library.mjs --strict`（第六节）和 `run-course.mjs`，修掉所有 error，逐条判断 warning。
 2. 跑 `templates/callout-to-blockquote.mjs "<根>" --dry-run` 和 `templates/fix-math-delims.mjs "<根>"`，确认没有旧式标注和错误的公式定界符。
-3. 回填 `00 大纲.md`，`checklist.md` 规划表全部 ✅。
-4. 短暂启动服务器，确认门户能开、能读、能判分、速查能打开，然后停掉。
-5. 至少挑两三篇笔记在 Typora 里实际打开（或请用户打开），确认公式成块显示、标注块标签可见、链接能点开。
-6. 向用户报告：章/节/概念/题目数量、校验结果、已知局限、如何打开学习。
+3. **顺读测试**：挑一章，从该章第一节的导读开始，只按正文的字面指示在一个空的 `project/`（或空白推导本）里照做到章末，不看 `code/`、不跳读、不凭自己的经验补步骤。每一步的结果都和正文一致、章末通跑通过，才算通过。操作定义见 `references/teaching-design.md` 第十二节。`run-course.mjs` 是它的机器版，人工版查的是机器查不出的「读者知不知道下一步干什么」。
+4. 回填 `00 大纲.md`，`checklist.md` 规划表全部 ✅。
+5. 短暂启动服务器，确认门户能开、能读、能判分、速查能打开，然后停掉。
+6. 至少挑两三篇笔记在 Typora 里实际打开（或请用户打开），确认公式成块显示、标注块标签可见、链接能点开。
+7. 向用户报告：章/节/概念/题目数量、校验结果、顺读测试结果、已知局限、如何打开学习。
 
 ---
 
-## 五、写作要求：像老师，不像百科
+## 五、写作要求：像带着做的老师，不像百科
 
 这里只列要点，完整规则见 `references/teaching-design.md`。
 
-- **假设读者零基础**。新概念先讲"它解决什么问题"，再给定义，再给例子，最后才给形式化。
+- **假设读者零基础，但手里有上一节的成果**。每节第一句话告诉他现在手上有什么、这节结束时多什么。
+- **先动手，后命名**。读者先做一步、看到结果（常常是一个报错），再告诉他这叫什么、为什么。概念条目短：一句话、准确定义、一个例子、一条易错点。
 - **允许口语化、比喻和「编者按」式吐槽**，知识本身必须严谨。可以吐槽难点，不可以含糊定义。
-- **概念小节灵活写**：必备的是一句话说明、准确定义、至少一个具体例子、至少一条易错点或辨析；直觉、形式化、代码、「记住这些」按需取用，不要为凑骨架硬写。
 - **先猜后看**：关键输出、反直觉结论出现之前，先让读者猜（`> <b>*Tip*</b>` + `先猜一猜`），再揭晓。
-- **渐进练习**：完整例题 → 留空让读者补关键步骤 → 本节练习独立完成。
+- **至少一次「现在是坏的」**：故意让读者撞上一个真实的报错、失败的测试或反例，再修好它。
+- **渐进练习**：步骤里完整示范 → 留空让读者补关键一步 → 本节练习独立完成。
 - **克制标注块**：标注块是重点提示，不是排版工具。每节不超过 20 个；普通叙述写成正文。
-- **复杂问题配完整案例**：有输入有输出、有问题有结局。
 - **代码块标注语言**；公式推导逐步可查，不跳步。
 
 分科目做法见 `references/subject-playbooks.md`。
@@ -175,13 +212,17 @@ description: "Use when someone wants to learn a subject from zero, or asks for �
 ## 六、校验
 
 ```bash
-node <skill>/scripts/check-library.mjs "<根>"                       # 全库
-node <skill>/scripts/check-library.mjs "<根>" --only "<相对路径>"     # 单篇（样章阶段）
+node <skill>/scripts/check-library.mjs "<根>" --strict                       # 全库（新库验收）
+node <skill>/scripts/check-library.mjs "<根>" --strict --only "<相对路径>"     # 单篇（样章阶段）
+node <skill>/scripts/check-library.mjs "<根>"                                # 老库：课程线规则只报 warning
+node <skill>/scripts/check-library.mjs "<根>" --replay-to "<空目录>"          # 写出每次【运行】时的 project/ 快照
+node <skill>/scripts/run-course.mjs "<根>"                                   # 在快照里真实运行并比对输出
+node <skill>/scripts/run-course.mjs "<根>" --write                           # 生成 code/out/、正文输出块、code/answer/chNN/
 ```
 
-它检查：命名、frontmatter、链接与图片（文件、锚点、空链接、越界）、Obsidian 专有语法与旧式标注、块级公式定界符、练习 3–5 题、篇幅与标注块预算、旧式概念编号残留、代码/输出绑定、速查与跨章回顾、`notes_data.js` 与文件和题目的一致性、测试分值、残留占位符。
+`check-library.mjs` 检查：命名、frontmatter、链接与图片（文件、锚点、空链接、越界）、Obsidian 专有语法与旧式标注、块级公式定界符、练习 3–5 题、篇幅与标注块预算、旧式概念编号残留、代码/输出绑定、速查与跨章回顾、`notes_data.js` 与文件和题目的一致性、测试分值、残留占位符，以及课程线规则 [R1]–[R11]：节内顺序与每步三要素、承接与钩子、概念写法、代码块标签与照做重放、答案区同构、未来版本泄漏、`code/` 里动手、章末通跑与项目地图、notebook、学时、本机绝对路径。
 
-**凡有 error 必须修完再交付。** warning 要逐条判断。脚本只能证明机械一致性，证明不了知识正确——之后按 `references/quality-gates.md` 人工过一遍。
+**凡有 error 必须修完再交付。** warning 要逐条判断。脚本只能证明机械一致性，证明不了知识正确，也证明不了读者读得懂——之后按 `references/quality-gates.md` 人工过一遍，其中包括顺读测试。
 
 ---
 
@@ -195,11 +236,18 @@ node <skill>/scripts/check-library.mjs "<根>" --only "<相对路径>"     # 单
 
 - 不要用聊天回答代替这座库。用户要的是文件。
 - 不要跳过 P0 和 P2.5 的确认就生成整库。
+- 不要把节写成概念的串联（`## 概念 1` `## 概念 2` `## 概念 3` 连排）。节的骨架是步骤。
+- 不要让读者在 `code/` 里建文件、`cd code/`，也不要把成品代码先放进 `code/` 再从里面摘片段。读者从空的 `project/` 开始。
+- 不要给「节选」、不要写 `# ...` 省略、不要给没有标签的代码块。读者照敲必须能跑。
+- 不要提前露出后面章节的版本（正文引用 `code/answer/` 下更晚的章、或直接展示最终版的类）。
+- 不要把框架代码写进 notebook；notebook 只做演示，且不带输出。
+- 不要在正文、命令、输出里写本机绝对路径（`D:\…`、`C:\Users\…`、`/home/…`）。
 - 不要在 `notes_data.js` 里复制正文。
 - 不要留悬空链接、空链接、`{{占位符}}`、缺失的图片、加起来不是 100 分的测试。
 - 不要用 `[[wikilink]]`、`![[嵌入]]`、`> [!note]`、`> **Note**:`、单行 `$$公式$$`。
-- 不要用 `C1-01` 这类旧式概念编号指代概念——概念没有独立文件，用「概念小节名 + 锚点链接」。
-- 不要编造代码输出；没有跑过就不要写"输出"。
-- 不要手写/重打 `index.html` 或两个启动脚本——复制。
+- 不要用 `C1-01` 这类旧式概念编号指代概念：用「概念名 + 锚点链接」。
+- 不要编造代码输出；没有跑过就不要写"输出"。真实输出和你预想的不一样时，改正文。
+- 不要手写/重打 `index.html` 或两个启动脚本：复制。
 - 不要加装饰性灌水图，不要用标注块堆版面。
+- 不要靠「决定不拆」绕过篇幅：一节超过 5 步或 100 分钟，就拆成两节。
 - 不要在不确定的知识上硬编。停下来，问，或者搜，或者标注存疑。

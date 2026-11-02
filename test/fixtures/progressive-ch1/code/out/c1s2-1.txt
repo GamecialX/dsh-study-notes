@@ -1,0 +1,11 @@
+minigrad 0.1.0
+d(x*x)/dx at x=3: 6.000000000039306
+Value(data=-4.0, grad=0.0)
+Traceback (most recent call last):
+  File "check.py", line 9, in <module>
+    print(a + 1)
+          ~~^~~
+  File "minigrad/value.py", line 12, in __add__
+    return Value(self.data + other.data)
+                             ^^^^^^^^^^
+AttributeError: 'int' object has no attribute 'data'

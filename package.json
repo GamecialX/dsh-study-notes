@@ -1,7 +1,7 @@
 {
   "name": "dsh-study-notes",
-  "version": "1.0.0",
-  "description": "Study-notes skill provider: plan a syllabus, write Feynman-style chaptered notes in portable standard Markdown, and ship a local web learning portal with gradable tests.",
+  "version": "2.0.0",
+  "description": "Study-notes skill provider: plan a syllabus and write a progressive course in portable standard Markdown, where each section grows one runnable artifact from an empty project, with a replay checker and a local web learning portal with gradable tests.",
   "type": "module",
   "exports": {
     ".": "./index.js",
@@ -18,7 +18,7 @@
     "test"
   ],
   "scripts": {
-    "test": "node test/verify-plugin.mjs && node test/check-fixture.mjs"
+    "test": "node test/verify-plugin.mjs && node test/check-fixture.mjs && node test/run-sample.mjs"
   },
   "author": "GamecialX <gamecialkaiju@gmail.com>",
   "license": "MIT",

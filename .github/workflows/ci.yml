@@ -26,5 +26,10 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Plugin self-checks
         run: node test/verify-plugin.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: End-to-end fixture
         run: node test/check-fixture.mjs
+      - name: Progressive sample replay (runs the Python steps)
+        run: node test/run-sample.mjs
