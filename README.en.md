@@ -24,11 +24,12 @@ Once `study-notes` is loaded, the agent produces the following under the notes r
 | `project/` (the reader's) | The reader's own workspace. It starts empty and grows step by step through the labels 【新建】 (create) / 【修改】 (diff) / 【重构】 (replace by name) / 【收口】 (wrap up) / 【运行】 (run); the agent never puts anything in it |
 | `code/` (answers and evidence, code-heavy subjects) | `code/answer/chNN/`: what `project/` should look like after chapter N; `code/out/`: the real output of every 【运行】 (bound with `<!-- output: -->`); `code/notebooks/CN_*.ipynb`: demo notebooks without outputs || `checklist.md` | Working record: plan table, progress pointer, recovery context (including the confirmed sample-section conventions), changelog |
 | `web/index.html` | Single-file learning portal (black mechanical style × frosted glass, all CSS/JS inlined) |
+| `web/vendor/katex/` | Offline math engine (KaTeX 0.16.22, ~1.3 MB; formulas render even without network) |
 | `web/notes_data.js` | Table of contents and quiz data (prose is not duplicated; the front end fetches `.md` at runtime) |
 | `web/serve.mjs` | Dependency-free Node static server (used only when Python is unavailable) |
 | `启动学习服务器.bat`, `start_server.sh` | Start the server and open the portal in one click |
 
-The portal provides: dashboard progress and average score, sidebar navigation tree, five kinds of callout rendered as coloured boxes with answers collapsed by default, heading anchors and standard `.md` links, a per-chapter cheat-sheet view, formulas (KaTeX-enhanced when available, automatic offline fallback), instant grading of in-section exercises, full chapter tests with a report card (objective questions auto-graded, subjective ones self-scored against the rubric, best and latest attempts kept), a knowledge graph, full-text search, and `localStorage` persistence.
+The portal provides: dashboard progress and average score, sidebar navigation tree, five kinds of callout rendered as coloured boxes with answers collapsed by default, heading anchors and standard `.md` links, a per-chapter cheat-sheet view, formulas (KaTeX ships with the portal, so they render offline; if the local copy is missing it falls back to the CDN), instant grading of in-section exercises, full chapter tests with a report card (objective questions auto-graded, subjective ones self-scored against the rubric, best and latest attempts kept), a knowledge graph, full-text search, and `localStorage` persistence.
 
 ---
 
@@ -102,8 +103,9 @@ dsh-study-notes/
 │   │   ├── chapter-test.md capstone.md
 │   │   ├── callout-to-blockquote.mjs     # legacy callouts ([!note] / **Note**:) → <b>*Note*</b> (idempotent)
 │   │   ├── fix-math-delims.mjs           # block formula delimiter $ → $$ (idempotent, writes only with --fix)
+│   │   ├── fix-mathbb.mjs                # \mathbb{…} → unicode blackboard letters (Typora 1.14 cannot render it)
 │   │   ├── 启动学习服务器.bat  start_server.sh
-│   │   └── web/{index.html, notes_data.js, serve.mjs}
+│   │   └── web/{index.html, notes_data.js, serve.mjs, vendor/katex/}
 │   └── scripts/
 │       ├── check-library.mjs            # validator (whole library / --only one note / --strict / --replay-to)
 │       └── run-course.mjs               # really runs 【运行】 commands in replay snapshots; compares or generates outputs and answer snapshots
@@ -218,6 +220,8 @@ Count the findings per `[R*]` number to see which rules and which chapters carry
 
 - [R11] absolute paths: replace `C:\Users\…`, `D:\…`, `/home/…` in text, commands and saved output with paths relative to the notes root or `project/`. If a script prints paths, make it print relative paths and regenerate the output.
 - [R8] notebooks: move them to `code/notebooks/CN_topic.ipynb` and clear their outputs.
+- Portal formulas: copy `templates/web/index.html` **and the whole `templates/web/vendor/`** into `<library>/web/`.
+  `index.html` alone still works, but offline it degrades formulas to source text; with `vendor/` (~1.3 MB) the portal renders formulas without network.
 
 **Step 2: migrate chapter by chapter, starting from chapter 1.** The bridge chain runs forward, so chapter N's "接上一节" depends on chapter N−1 already being migrated. For each chapter:
 

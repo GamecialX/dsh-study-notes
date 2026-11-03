@@ -644,9 +644,14 @@ body {
     quiz: "notes_portal:quiz"
   };
 
+  /* KaTeX 优先用随门户分发的本地副本（web/vendor/katex/，离线可用）；
+     本地副本缺失或被删时才回退 CDN。本地是 0.16.22，CDN 是 0.16.11，排版一致。 */
   var KATEX = {
-    css: "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
-    js: "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
+    local: { css: "vendor/katex/katex.min.css", js: "vendor/katex/katex.min.js" },
+    cdn: {
+      css: "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
+      js: "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
+    }
   };
 
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
@@ -1214,24 +1219,35 @@ body {
   function ensureKatex() {
     if (state.opts.katex === false) return;
     if (state.katexLoaded || window.katex) { state.katexLoaded = true; return; }
-    var done = false;
-    var timer = setTimeout(function () { if (!done) { done = true; } }, 2600);
+    /* 先本地、再 CDN：本地文件读取失败（被删 / 路径不对）时自动换下一个来源。 */
+    var sources = [KATEX.local, KATEX.cdn];
+    var tried = 0;
 
-    var link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = KATEX.css;
-    document.head.appendChild(link);
+    function attempt() {
+      if (tried >= sources.length) { state.katexFailed = true; return; }
+      var src = sources[tried++];
+      var link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = src.css;
+      document.head.appendChild(link);
 
-    var script = document.createElement("script");
-    script.src = KATEX.js;
-    script.async = true;
-    script.onload = function () {
-      done = true; clearTimeout(timer);
-      state.katexLoaded = !!window.katex;
-      if (state.katexLoaded) upgradeMath(document);
-    };
-    script.onerror = function () { done = true; clearTimeout(timer); };
-    document.head.appendChild(script);
+      var script = document.createElement("script");
+      script.async = true;
+      script.src = src.js;
+      script.onload = function () {
+        if (window.katex) {
+          state.katexLoaded = true;
+          state.katexSource = src === KATEX.local ? "local" : "cdn";
+          upgradeMath(document);
+          return;
+        }
+        attempt();
+      };
+      script.onerror = attempt;
+      document.head.appendChild(script);
+    }
+
+    attempt();
   }
 
   function upgradeMath(root) {

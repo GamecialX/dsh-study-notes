@@ -7,7 +7,7 @@
 ## 一、总原则
 
 1. **单事实源**：正文内容**不复制**进网页数据。前端实时 `fetch` 对应 `.md` 文件渲染。用户在 Typora 里改了 md，刷新网页即同步。`notes_data.js` 只存目录结构与测试/练习的结构化数据。
-2. **单文件应用**：`index.html` 内联全部 CSS/JS，零构建、零安装。**核心功能（导航、阅读、测试、进度）不得依赖外网资源**；CDN 仅可用于公式渲染等增强项，且离线时必须降级。
+2. **单文件应用**：`index.html` 内联全部 CSS/JS，零构建、零安装。**核心功能（导航、阅读、测试、进度）不得依赖外网资源**；公式增强也默认离线可用（随门户分发 `web/vendor/katex/`），只有本地副本缺失时才回退 CDN，两者都不可用时降级为源码样式。
 3. **路由用 hash**：`#/home`、`#/read/c1s1`、`#/test/c1`，兼容任意静态服务器。
 
 ---
@@ -18,7 +18,9 @@
 web/
 ├── index.html        # 单文件应用（内联 CSS/JS，内置迷你 Markdown 渲染器）
 ├── notes_data.js     # window.NOTES_DATA = { ... }
-└── serve.mjs         # Node 兜底静态服务器（只在探测不到 Python 时使用）
+├── serve.mjs         # Node 兜底静态服务器（只在探测不到 Python 时使用）
+└── vendor/katex/     # KaTeX 0.16.22（katex.min.js + katex.min.css + fonts/，约 1.3 MB）
+                      # 离线公式排版用；由模板整目录复制，不要手改
 ```
 
 - `notes_data.js` 由**你**手写；`index.html` 与 `serve.mjs` 从模板复制，不要改（除非用户明确要求定制门户）。
@@ -76,7 +78,7 @@ meta: {
   subject: "……",
   options: {
     fillCaseSensitive: false,   // fill 判分是否区分大小写（默认不分）
-    katex: "auto"               // "auto"（尝试 CDN，失败降级）| false（从不加载）
+    katex: "auto"               // "auto"（先用门户自带的 web/vendor/katex/，本地缺失再回退 CDN）| false（从不加载）
   }
 }
 ```
@@ -163,7 +165,7 @@ meta: {
   - 标准链接 `[文字](相对路径.md#锚点)` → 按相对该 md 所在目录解析，指向节笔记 / 速查 / 测试时跳到 `#/read/…` / `#/sheet/…` / `#/test/…`，`00 大纲.md` 跳到仪表盘；`#锚点` 滚动到对应标题；目标不在门户里或为空链接时渲染为灰色"缺失链接"。
   - 图片 `![说明](src/x.png)` → 按相对该 md 所在目录解析。
   - 旧式 `> [!x]` callout 与 `[[wikilink]]` 仍能渲染（兼容老库），新内容不要再用。
-- **公式**：识别 `$...$` 与 `$$...$$`；允许 CDN 引入 KaTeX 增强渲染，但离线时必须降级为等宽高亮的 LaTeX 源码样式，保证可读。**禁止因解析失败丢失或截断正文。**
+- **公式**：识别 `$...$` 与 `$$...$$`；KaTeX 优先用门户目录里的 `web/vendor/katex/`（随模板分发，断网也能排版），本地副本缺失时才回退 CDN；两者都不可用时降级为等宽高亮的 LaTeX 源码样式，保证可读。**禁止因解析失败丢失或截断正文。**
 - **判分规则**：
   - `choice` / `judge` 自动判分；
   - `fill` 去除首尾空格后与答案全等（大小写策略按 `meta.options.fillCaseSensitive` 声明，默认不区分）；
@@ -190,10 +192,13 @@ meta: {
 | 需要什么 | 去哪里拿 |
 |---|---|
 | 门户应用本体（数千行） | `templates/web/index.html` |
+| 离线公式引擎 | `templates/web/vendor/katex/`（整个目录复制） |
 | Node 兜底静态服务器 | `templates/web/serve.mjs` |
 | 两个启动脚本 | `templates/启动学习服务器.bat`、`templates/start_server.sh` |
 
-这四个文件**必须逐字节复制**（Windows 用 `Copy-Item -LiteralPath`，macOS/Linux 用 `cp`）：`.bat` 依赖 CRLF 行尾与 UTF-8 代码页，手抄必然出错；`index.html` 有数千行，重打既费时又容易破坏渲染器。
+这些文件**必须逐字节复制**（Windows 用 `Copy-Item -LiteralPath`，macOS/Linux 用 `cp`）：`.bat` 依赖 CRLF 行尾与 UTF-8 代码页，手抄必然出错；`index.html` 有数千行，重打既费时又容易破坏渲染器；`vendor/katex/` 含 60 个字体文件，手抄必漏。
+
+> 老库补装：把 `templates/web/index.html` 与 `templates/web/vendor/` 一起复制进 `<根>/web/` 即可，`index.html` 会自动优先用本地 KaTeX。若只复制了 `index.html`，公式仍会尝试 CDN（离线时降级为源码，正文不受影响）。
 
 ---
 

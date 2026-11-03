@@ -30,12 +30,13 @@
 | `project/`（读者的） | 读者自己动手的工程，从空目录开始，照正文的【新建】/【修改】/【重构】/【收口】/【运行】一步步长出来；agent 不往里放东西 |
 | `code/`（答案与证据，代码类科目） | `code/answer/chNN/`：第 N 章做完时 `project/` 应有的样子；`code/out/`：每次【运行】的真实输出（`<!-- output: -->` 绑定）；`code/notebooks/CN_*.ipynb`：演示用 notebook（不带输出） || `checklist.md` | 工作记录：规划表、进度指针、恢复上下文（含样章确认的风格约定）、变更日志 |
 | `web/index.html` | 单文件学习门户（黑色机械风 × 毛玻璃，内联全部 CSS/JS） |
+| `web/vendor/katex/` | 离线公式引擎（KaTeX 0.16.22，约 1.3 MB；断网也能排版公式） |
 | `web/notes_data.js` | 目录结构与题目数据（正文不复制，前端实时 fetch `.md`） |
 | `web/serve.mjs` | 零依赖 Node 静态服务器（只在探测不到 Python 时使用） |
 | `启动学习服务器.bat`、`start_server.sh` | 一键起服务器并自动打开门户 |
 
 门户的能力：仪表盘进度与均分、侧栏导航树、标注块（`> <b>*Note*</b>` 等 5 种）渲染为彩色框且答案默认折叠、
-标题锚点与标准 `.md` 链接跳转、本章速查页、公式（KaTeX 可用时增强、离线自动降级）、节内练习即时判分、
+标题锚点与标准 `.md` 链接跳转、本章速查页、公式（KaTeX 随门户离线分发，断网也能排版；本地副本缺失时自动回退 CDN）、节内练习即时判分、
 章末整卷测试与成绩单（客观题自动判分、主观题按评分要点自评、保留最佳与最近成绩）、知识图谱、全文搜索、
 `localStorage` 持久化。
 
@@ -112,8 +113,9 @@ dsh-study-notes/
 │   │   ├── chapter-test.md capstone.md
 │   │   ├── callout-to-blockquote.mjs     # 旧标注（[!note] / **Note**:）→ <b>*Note*</b>（幂等）
 │   │   ├── fix-math-delims.mjs           # 块级公式定界符 $ → $$（幂等，--fix 才写盘）
+│   │   ├── fix-mathbb.mjs                # \mathbb{…} → unicode 花体（Typora 1.14 渲染不了）
 │   │   ├── 启动学习服务器.bat  start_server.sh
-│   │   └── web/{index.html, notes_data.js, serve.mjs}
+│   │   └── web/{index.html, notes_data.js, serve.mjs, vendor/katex/}
 │   └── scripts/
 │       ├── check-library.mjs            # 校验器（全库 / --only 单篇 / --strict / --replay-to 照做重放）
 │       └── run-course.mjs               # 在重放快照里真实运行【运行】命令，比对或生成输出与答案快照
@@ -245,6 +247,8 @@ node assets/study-notes/scripts/check-library.mjs "<库>" --json > before.json
 - [R11] 本机绝对路径：正文、命令、保存的输出里的 `C:\Users\…`、`D:\…`、`/home/…` 换成相对笔记根目录或 `project/` 的写法；
   脚本打印路径的，改成先转相对路径再打印，然后重新生成输出。
 - [R8] notebook：挪到 `code/notebooks/CN_主题.ipynb`，清空输出。
+- 门户公式：把 `templates/web/index.html` 与整个 `templates/web/vendor/` 复制进 `<库>/web/`。
+  只复制 `index.html` 也能用，但断网时公式会退化成源码；带上 `vendor/`（约 1.3 MB）才是真正离线可读。
 
 **第 2 步：按章迁移，从第 1 章开始往后。** 承接链是从前往后的，第 N 章的「接上一节」依赖第 N−1 章已经迁好。每一章：
 

@@ -28,6 +28,7 @@ description: "Use when someone wants to learn a subject from zero, or asks for �
 | `code/`（答案与证据） | `code/answer/chNN/`：第 N 章做完时 `project/` 应有的样子（与 `project/` 同构）；`code/out/`：每次【运行】的真实输出；`code/notebooks/CN_*.ipynb`：演示用 notebook（无输出）。读者只来这里**对答案**，不在这里写东西 |
 | `checklist.md` | 工作记录：规划表、进度指针、恢复上下文、追加式变更日志 |
 | `web/index.html` | 单文件学习门户（内联全部 CSS/JS，零构建、零安装、离线可用） |
+| `web/vendor/katex/` | 离线公式引擎（KaTeX 0.16.22，约 1.3 MB；整目录从模板复制，断网也能排版公式） |
 | `web/notes_data.js` | 目录结构与练习/测试的结构化数据（不复制正文，前端实时读取 md） |
 | `启动学习服务器.bat`、`start_server.sh` | 一键启动本地服务器并自动打开门户 |
 
@@ -53,6 +54,7 @@ description: "Use when someone wants to learn a subject from zero, or asks for �
 | 修块级公式定界符（`$` 独占一行 → `$$`） | `templates/fix-math-delims.mjs` | 交付前自检用；幂等，`--fix` 才写盘 |
 | 把 `\mathbb{R}` 批量换成 unicode 花体 `ℝ`（Typora 1.14 的 MathJax 4 渲染不了 `\mathbb`） | `templates/fix-mathbb.mjs` | `--dry` 先看清单；改完重跑 `_维护/build.mjs` 与 `check-library --strict` |
 | **门户应用本体**（数千行） | `templates/web/index.html` | **用 shell 复制，不要手写、不要重打** |
+| 门户的离线公式引擎（KaTeX 0.16.22 + 60 个字体文件） | `templates/web/vendor/katex/` | 整个目录复制到 `<根>/web/vendor/`；漏了它门户就只能回退 CDN，断网时公式变源码 |
 | Node 兜底静态服务器（无 Python 时用） | `templates/web/serve.mjs` | 一起复制 |
 | `notes_data.js` 的形状示例 | `templates/web/notes_data.js` | 只当参考，内容自己生成 |
 | 启动脚本 | `templates/启动学习服务器.bat`、`templates/start_server.sh` | **用 shell 复制并保持原字节** |
@@ -152,7 +154,7 @@ references 里的示例大多取自代码类 / 计算机类 / AI 类课程，只
 ### P2 · 工作记录 + 门户骨架
 
 1. 从 `templates/checklist.md` 生成 `<根>/checklist.md`。
-2. 复制 `templates/web/index.html`、`templates/web/serve.mjs` 到 `<根>/web/`，复制两个启动脚本到 `<根>/`，生成只含目录的 `<根>/web/notes_data.js`。
+2. 复制 `templates/web/index.html`、`templates/web/serve.mjs` 与整个 `templates/web/vendor/` 到 `<根>/web/`，复制两个启动脚本到 `<根>/`，生成只含目录的 `<根>/web/notes_data.js`。
 
 **判据**：双击启动脚本能打开门户并看到各章卡片。
 
