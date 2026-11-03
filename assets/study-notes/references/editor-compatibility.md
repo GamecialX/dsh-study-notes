@@ -130,3 +130,38 @@ node callout-to-blockquote.mjs "<笔记根目录>"             # 实际改写
 node fix-math-delims.mjs "<笔记根目录>"          # 只报告
 node fix-math-delims.mjs "<笔记根目录>" --fix    # 实际改写
 ```
+
+---
+
+## 六、Typora 1.14 渲染不了 `\mathbb`（2026-11 实测）
+
+**症状**：只有含 `\mathbb` 的公式整条退回源码（块级显示成 `$$\mathbb{R}^{N\times H}$$`，行内显示成 `$\mathbb{R}^{3}$`）；同一篇里含 `\qquad`、`\mathcal`、`\ell`、`\mathbf` 的公式都正常。
+
+**根因**（用 Typora 自带的 MathJax 4.1.0 做的隔离实验）：
+
+- Typora 1.14 升级到 **MathJax 4**（`Change Log` 里写着 "Upgrade to MathJax v4"）。
+- MathJax 4 对**首次使用的字形族**做惰性字体初始化；初始化需要异步，而 Typora 走的是**同步**渲染路径。
+- 同步调用遇到它就抛 `MathJax retry -- an asynchronous action is required; try using one of the promise-based functions and await its resolution.`，Typora 捕获后把整条公式退回源码。
+- 用同一个 bundle 改成 `await tex2svgPromise(...)` 后，同一批公式全部正常 → 问题在"同步渲染"，不在公式本身。
+- 全库审计：1209 条公式里 88 条同步失败，失败清单与"含 `\mathbb`"几乎一一对应。`\mathbb` 是唯一稳定触发的宏。
+
+**规则：正文公式里禁止 `\mathbb`。** 替代写法（Typora 1.14 与门户 KaTeX 0.16 都验证过）：
+
+| 原来的写法 | 改成 | 说明 |
+|---|---|---|
+| `\mathbb{R}` `\mathbb{N}` `\mathbb{Z}` `\mathbb{Q}` `\mathbb{C}` `\mathbb{P}` `\mathbb{H}` | `ℝ` `ℕ` `ℤ` `ℚ` `ℂ` `ℙ` `ℍ` | unicode 双线体，外观与 `\mathbb` 完全一致 |
+| `\mathbb{E}` | `𝔼` | 期望符号 |
+| `\mathbb{1}[x>0]` | `\mathbf{1}[x>0]` | 指示函数；`𝟙` 也能渲染，但 KaTeX 缺字宽数据，排版略歪 |
+| `\mathbb{A}` 等其余字母 | 对应 unicode 双线体 | `node templates/fix-mathbb.mjs "<根>"` 可批量换 |
+
+**批量修复**：
+
+```bash
+node templates/fix-mathbb.mjs "<笔记根目录>" --dry   # 先看会改哪些文件
+node templates/fix-mathbb.mjs "<笔记根目录>"         # 实际改写（md/js/json，跳过历史目录）
+node _维护/build.mjs                                 # 题库改过就重生成 notes_data.js 与大纲
+node .../scripts/check-library.mjs "<笔记根目录>" --strict   # [R12] 应为 0
+```
+
+**为什么不用"升级 Typora / 装宏包"来绕过**：读者的机器是既定的，教程必须开箱能读；而且这是编辑器内部竞态，表现为"有时能显示、有时不能"，不可依赖。改内容最稳，代价只是一次批量替换。
+

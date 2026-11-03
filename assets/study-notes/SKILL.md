@@ -51,6 +51,7 @@ description: "Use when someone wants to learn a subject from zero, or asks for �
 | 骨架：大纲、工作记录、节笔记、速查、章末测试、毕业设计 | `templates/syllabus.md`、`checklist.md`、`section-note.md`、`cheat-sheet.md`、`chapter-test.md`、`capstone.md` | 读模板 → 按科目填充 → 写到 `<根>` |
 | 旧标注迁移（`> [!note]`、`> **Note**:` → `> <b>*Note*</b>`） | `templates/callout-to-blockquote.mjs` | 老库迁移用；幂等，`--dry-run` 只统计 |
 | 修块级公式定界符（`$` 独占一行 → `$$`） | `templates/fix-math-delims.mjs` | 交付前自检用；幂等，`--fix` 才写盘 |
+| 把 `\mathbb{R}` 批量换成 unicode 花体 `ℝ`（Typora 1.14 的 MathJax 4 渲染不了 `\mathbb`） | `templates/fix-mathbb.mjs` | `--dry` 先看清单；改完重跑 `_维护/build.mjs` 与 `check-library --strict` |
 | **门户应用本体**（数千行） | `templates/web/index.html` | **用 shell 复制，不要手写、不要重打** |
 | Node 兜底静态服务器（无 Python 时用） | `templates/web/serve.mjs` | 一起复制 |
 | `notes_data.js` 的形状示例 | `templates/web/notes_data.js` | 只当参考，内容自己生成 |
@@ -236,7 +237,7 @@ node <skill>/scripts/run-course.mjs "<根>"                                   # 
 node <skill>/scripts/run-course.mjs "<根>" --write                           # 生成 code/out/、正文输出块、code/answer/chNN/
 ```
 
-`check-library.mjs` 检查：命名、frontmatter、链接与图片（文件、锚点、空链接、越界）、Obsidian 专有语法与旧式标注、块级公式定界符、练习 3–5 题、篇幅与标注块预算、旧式概念编号残留、代码/输出绑定、速查与跨章回顾、`notes_data.js` 与文件和题目的一致性、测试分值、残留占位符，以及课程线规则 [R1]–[R11]：节内顺序与每步三要素、承接与钩子、概念写法、代码块标签与照做重放、答案区同构、未来版本泄漏、`code/` 里动手、章末通跑与项目地图、notebook、学时、本机绝对路径；另外以 warning 报讲解线规则 [T1]–[T5]（每步先讲后做、概念长度、先想一下、回看、讲解与代码比例）。
+`check-library.mjs` 检查：命名、frontmatter、链接与图片（文件、锚点、空链接、越界）、Obsidian 专有语法与旧式标注、块级公式定界符、练习 3–5 题、篇幅与标注块预算、旧式概念编号残留、代码/输出绑定、速查与跨章回顾、`notes_data.js` 与文件和题目的一致性、测试分值、残留占位符，以及课程线规则 [R1]–[R12]：节内顺序与每步三要素、承接与钩子、概念写法、代码块标签与照做重放、答案区同构、未来版本泄漏、`code/` 里动手、章末通跑与项目地图、notebook、学时、本机绝对路径、`\mathbb`（Typora 1.14 渲染不了）；另外以 warning 报讲解线规则 [T1]–[T5]（每步先讲后做、概念长度、先想一下、回看、讲解与代码比例）。
 
 **凡有 error 必须修完再交付。** warning 要逐条判断。脚本只能证明机械一致性，证明不了知识正确，也证明不了读者读得懂——之后按 `references/quality-gates.md` 人工过一遍，其中包括顺读测试。
 

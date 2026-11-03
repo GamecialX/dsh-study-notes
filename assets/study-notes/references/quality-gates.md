@@ -41,6 +41,7 @@
 - [ ] 所有图片文件存在
 - [ ] 无 `[[wikilink]]`、`![[嵌入]]`；无 `> [!note]`、`> **Note**:` 旧式标注（warning 也要清掉）
 - [ ] 块级公式 `$$` 各占一行
+- [ ] [R12] 公式里没有 `\mathbb`（Typora 1.14 的 MathJax 4 渲染不了，整条公式会退回源码）；花体字母用 unicode（ℝ ℕ ℤ ℚ ℂ 𝔼），指示函数用 `\mathbf{1}`
 - [ ] 每篇笔记 frontmatter 有 `subject`、`chapter`、`status`、`tags`（`checklist.md` 豁免）
 - [ ] 每节练习 3–5 题；`notes_data.js` 里每节 `quiz` 3–5 题
 - [ ] `<!-- source: -->` / `<!-- output: -->` 绑定的内容逐行能在对应文件里找到

@@ -181,7 +181,7 @@ node assets/study-notes/scripts/run-course.mjs "<笔记根目录>" --python "py 
 - **可移植**：`[[wikilink]]` / `![[嵌入]]` = error；`> [!x]` callout、`> **Note**:`、单行 `$$`、多 H1 = warning。
 - **教学**：每节练习 3–5 题（只数「本节练习」里的答案块）、篇幅 ≤ 800 行、标注块 ≤ 20、旧式 `C1-01` 编号残留、第 3 章起测试的 `【回顾 CX】` 题。
 - **代码**：`<!-- source: -->` / `<!-- output: -->` 绑定的片段逐行对照真实文件；写了「真实输出」却没绑定 = warning。
-- **课程线 [R1]–[R11]**（默认 warning，`--strict` 时 error）：
+- **课程线 [R1]–[R12]**（默认 warning，`--strict` 时 error）：
   - [R1] 节内顺序是 导读 → 接上一节 → 3–5 步 → 小结 → 练习 → 概念索引，每一步都有「动作 → 可见结果 → 为什么」；
   - [R2] `## 接上一节`（上一节做到 / 留下的坑 / 本节补上）和节末的「留给下一节」；
   - [R3] 概念是步骤里的节点（`### 概念 N：` 或被两步包夹的 `## 概念 N：`），全库统一一种写法；
@@ -190,6 +190,7 @@ node assets/study-notes/scripts/run-course.mjs "<笔记根目录>" --python "py 
   - [R5] 导读写清「你现在手上」和「本节结束时」；[R6] 章末通跑（一条命令 + 真实输出）；[R7] 章末项目地图（非代码科目是产物目录，不要求 `project/`）；
   - [R8] notebook 放 `code/notebooks/CN_*.ipynb` 且不带输出；[R10] 每节 3–5 步、预计 30–100 分钟；
   - [R11] 正文、命令、输出里没有本机绝对路径。
+  - [R12] 公式里没有 `\mathbb`：Typora 1.14 内置 MathJax 4，同步渲染路径上 `\mathbb` 会整条退回源码（读者以为公式坏了）。花体字母写 unicode（`ℝ` `ℕ` `ℤ` `ℚ` `ℂ` `𝔼`），指示函数写 `\mathbf{1}`；批量替换 `templates/fix-mathbb.mjs`。实测细节见 `assets/study-notes/references/editor-compatibility.md` 第六节。
   - [R9]「每节一个产物」是规划阶段的要求，落在大纲与 checklist 的「本节产物」列，由人工核对。
 - **门户**：`notes_data.js` 路径逐字符一致、`quiz` 3–5 题、分值恰为 100、客观题 ≥ 60、`sheet`、`concepts`、`links` 两端、md 与 js 的题目对应。
 

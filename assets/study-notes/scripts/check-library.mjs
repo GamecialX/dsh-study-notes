@@ -6,7 +6,7 @@
  *   node check-library.mjs "<笔记根目录>"
  *   node check-library.mjs "<笔记根目录>" --json
  *   node check-library.mjs "<笔记根目录>" --only "Cha_1 章名/C1 Sec_1 节名.md"   # 样章 / 单篇检查
- *   node check-library.mjs "<笔记根目录>" --strict        # 课程线规则（R1–R11）由 warning 升为 error
+ *   node check-library.mjs "<笔记根目录>" --strict        # 课程线规则（R1–R12）由 warning 升为 error
  *   node check-library.mjs "<笔记根目录>" --replay-to "<空目录>"   # 把正文照做一遍，写出每次【运行】时的 project/ 快照
  *   node check-library.mjs --help
  *
@@ -25,7 +25,7 @@ const HELP = `check-library.mjs —— 学习笔记库交付前校验器
   node check-library.mjs "<笔记根目录>"                     人类可读报告
   node check-library.mjs "<笔记根目录>" --json              JSON 输出
   node check-library.mjs "<笔记根目录>" --only "<相对路径>"  只查指定笔记（可重复；样章阶段用）
-  node check-library.mjs "<笔记根目录>" --strict            课程线规则 [R1]–[R11] 的 warning 一律升为 error
+  node check-library.mjs "<笔记根目录>" --strict            课程线规则 [R1]–[R12] 的 warning 一律升为 error
   node check-library.mjs "<笔记根目录>" --replay-to "<目录>" 照正文的【新建】/【修改】/【重构】从空目录重放，
                                                            每遇到一次【运行】就把当时的 project/ 写成一个快照
   node check-library.mjs --help
@@ -45,6 +45,7 @@ const HELP = `check-library.mjs —— 学习笔记库交付前校验器
           [R5] 导读写「你现在手上 / 本节结束时」   [R6] 章末通跑   [R7] 章末项目地图（非代码科目是产物目录）
           [R8] notebook 放 code/notebooks/CN_*.ipynb、不带输出   [R10] 3–5 步、30–100 分钟
           [R11] 正文、命令、输出里没有本机绝对路径
+          [R12] 没有 Typora 1.14 渲染不了的 \mathbb（改写 unicode 花体字母）
           默认 warning（老库不会被一次性判死），--strict 时为 error
   门户    notes_data.js 路径逐字符一致、分值恰为 100、客观题 ≥ 60、md 与 js 的题目对应
 
@@ -315,7 +316,7 @@ if (sheetsMissing.length) {
   warn(`第 ${sheetsMissing.join('、')} 章没有 \`CX 速查.md\`（一页纸的本章速查，见 references/teaching-design.md）。`, '章目录');
 }
 
-/* ------------------------------------------ 课程线（R1–R11）：共用部分 */
+/* ------------------------------------------ 课程线（R1–R12）：共用部分 */
 
 /**
  * 课程线规则是这一版新增的教学结构要求。老库按旧骨架写成，默认只报 warning，
@@ -426,6 +427,23 @@ function checkAbsolutePaths(raw, rel) {
   if (!hits.length) return;
   const sample = hits.slice(0, 3).map((m) => `第 ${lineOf(raw, m.index)} 行 \`${m[0].slice(0, 50)}\``).join('、');
   lint('R11', `有 ${hits.length} 处本机绝对路径（${sample}）。读者的机器上没有这些路径：正文、命令和输出里的路径都写成相对笔记根目录或 \`project/\` 的形式；脚本打印路径时先转成相对路径（如 Python 的 \`Path.relative_to\`），再保存输出。`, rel);
+}
+
+/* ------------------------------------------ [R12] Typora 1.14 渲染不了的数学宏 */
+
+/**
+ * Typora 1.14 内置 MathJax 4，同步渲染路径遇到「首次使用的字形族」会抛
+ * `MathJax retry -- an asynchronous action is required`，编辑器于是把整条公式
+ * 退回源码。实测唯一稳定触发的就是 \mathbb（\mathbf / \mathrm / \mathcal / \ell 都正常）。
+ * 替代：花体字母直接写 unicode（ℝ ℕ ℤ ℚ ℂ ℙ ℍ 𝔼），指示函数用 \mathbf{1}。
+ */
+const MATHBB = /\\mathbb\s*\{\s*[A-Za-z0-9]\s*\}/gu;
+
+function checkMathMacros(raw, rel) {
+  const hits = [...raw.matchAll(MATHBB)];
+  if (!hits.length) return;
+  const sample = hits.slice(0, 3).map((m) => `第 ${lineOf(raw, m.index)} 行 \`${m[0]}\``).join('、');
+  lint('R12', `有 ${hits.length} 处 \\mathbb（${sample}）。Typora 1.14 的内置 MathJax 4 在同步渲染路径上渲染不了它，公式会整条退回源码（读者以为"公式坏了"）。花体字母直接写 unicode：\\mathbb{R} → ℝ、\\mathbb{N} → ℕ、\\mathbb{E} → 𝔼；指示函数写 \\mathbf{1}。批量替换：node templates/fix-mathbb.mjs "<笔记根目录>"。`, rel);
 }
 
 /* ------------------------------------------ [R4][R8] 不许引用未来 */
@@ -956,6 +974,7 @@ for (const file of targets) {
   /* 课程线：可移植路径、答案泄漏（所有笔记），节内施工线（节笔记） */
   const chapterOfFile = CH_DIR.exec(rel.split('/')[0] || '');
   if (!isLog) checkAbsolutePaths(raw, rel);
+  if (!isLog) checkMathMacros(raw, rel);
   if (chapterOfFile) checkLeaks(raw, rel, Number(chapterOfFile[1]));
   if (secMatch && chapterOfFile) checkCourseLine(file, raw, rel, Number(secMatch[1]), Number(secMatch[2]), chapterOfFile[2]);
 
@@ -1364,7 +1383,7 @@ if (asJson) {
   console.log('');
   if (!problems.length) console.log('OK：没有发现问题。');
   const courseCount = problems.filter((p) => /^\[R\d+\]/u.test(p.message)).length;
-  if (courseCount && !strict) console.log(`其中 ${courseCount} 条是课程线规则 [R1]–[R11]（默认 warning；新库请用 --strict 验收）。`);
+  if (courseCount && !strict) console.log(`其中 ${courseCount} 条是课程线规则 [R1]–[R12]（默认 warning；新库请用 --strict 验收）。`);
   console.log(`SUMMARY ERRORS=${errors.length} WARNINGS=${warns.length}${partial ? ' (--only)' : ''}${strict ? ' (--strict)' : ''} ROOT=${root}`);
 }
 
