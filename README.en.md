@@ -89,7 +89,7 @@ dsh-study-notes/
 ├── icon.svg               # card icon on the Plugins page
 ├── locale/{en,zh}.json    # card title/description ({ "meta": { title, description } })
 ├── assets/study-notes/    # the skill itself (resourceBase points here: real files, not .d.ts)
-│   ├── SKILL.md           # entry instructions: positioning, artifacts, asset map, seven rules and course-line rules R1–R11, P0–P5 flow (incl. P2.5 sample-section confirmation and P5 read-in-order test)
+│   ├── SKILL.md           # entry instructions: positioning, artifacts, asset map, seven rules and course-line rules R1–R13, P0–P5 flow (incl. P2.5 sample-section confirmation and P5 read-in-order test)
 │   ├── references/        # specs loaded on demand
 │   │   ├── notes-standard.md            # the single formatting spec: structure, naming, callouts, link/formula/code binding, cheat sheets, tests
 │   │   ├── teaching-design.md           # the single teaching spec: one artifact line, cumulative sections, concepts at first point of need, length by study time, read-in-order test
@@ -104,6 +104,7 @@ dsh-study-notes/
 │   │   ├── callout-to-blockquote.mjs     # legacy callouts ([!note] / **Note**:) → <b>*Note*</b> (idempotent)
 │   │   ├── fix-math-delims.mjs           # block formula delimiter $ → $$ (idempotent, writes only with --fix)
 │   │   ├── fix-mathbb.mjs                # \mathbb{…} → unicode blackboard letters (Typora 1.14 cannot render it)
+│   │   ├── fix-math-escapes.mjs          # doubled backslashes in maths + control characters left by string escaping (idempotent)
 │   │   ├── 启动学习服务器.bat  start_server.sh
 │   │   └── web/{index.html, notes_data.js, serve.mjs, vendor/katex/}
 │   └── scripts/
@@ -160,6 +161,7 @@ node assets/study-notes/scripts/check-library.mjs "<notes-root>" --replay-to "<e
 node assets/study-notes/scripts/run-course.mjs "<notes-root>"           # really run every 【运行】 in its snapshot, compare with saved output
 node assets/study-notes/scripts/run-course.mjs "<notes-root>" --write   # generate code/out/, the output blocks in the text, code/answer/chNN/
 node assets/study-notes/scripts/run-course.mjs "<notes-root>" --python "py -3"  # choose the interpreter
+node assets/study-notes/scripts/run-course.mjs "<notes-root>" --timeout 400000   # per-command timeout (default 120 s; long demos need more)
 ```
 
 `check-library.mjs` exits `0` = no errors (warnings may exist), `1` = errors, `2` = usage error. It checks:
@@ -169,24 +171,26 @@ node assets/study-notes/scripts/run-course.mjs "<notes-root>" --python "py -3"  
 - **Portability**: `[[wikilink]]` / `![[embed]]` = error; `> [!x]` callouts, `> **Note**:`, single-line `$$`, multiple H1s = warning.
 - **Teaching**: 3–5 exercises per section (only counting answer blocks under "本节练习"), ≤ 800 lines per note, ≤ 20 callouts, leftover old `C1-01` numbering, `【回顾 CX】` review questions from chapter 3 on.
 - **Code**: fragments bound by `<!-- source: -->` / `<!-- output: -->` are compared line by line against the real files; "real output" claimed but unbound = warning.
-- **Course line [R1]–[R11]** (warnings by default, errors under `--strict`):
+- **Course line [R1]–[R13]** (warnings by default, errors under `--strict`):
   - [R1] section order is intro → 接上一节 → 3–5 steps → summary → exercises → concept index, and every step has "action → visible result → why";
   - [R2] a `## 接上一节` bridge (what the last section built / what it left open / what this section adds) and a closing "留给下一节" hook;
   - [R3] concepts are nodes inside steps (`### 概念 N：`, or a `## 概念 N：` sandwiched between two steps), one style across the library;
   - [R4] code blocks carry 【新建】/【修改】(diff)/【重构】/【收口】 labels with a path under `project/`, no "excerpt" blocks and no elided lines; replaying the text from an empty directory must succeed and the end of each chapter must match `code/answer/chNN/`; no references to answers or notebooks from later chapters; the reader never works inside `code/`;
   - [R5] the intro states "what you have now" and "what you will have at the end"; [R6] chapter smoke run (one command + real output); [R7] chapter project map (for non-code subjects, a table of contents of the artifact; no `project/` required);
   - [R8] notebooks live in `code/notebooks/CN_*.ipynb` without outputs; [R10] 3–5 steps and 30–100 minutes per section;
-  - [R11] no machine-specific absolute paths in text, commands or output.
+  - [R11] no machine-specific absolute paths in text, commands or output;
+  - [R12] no `\mathbb{…}` in maths (Typora 1.14 ships MathJax 4 and renders the whole formula as raw source) — use unicode ℝ/𝔼 and `\mathbf{1}`;
+  - [R13] a single layer of backslashes only: inside maths `\\command` is a line break, not a command, and control characters (TAB/CR/FF/BS/BEL/VT left over from string escaping) must not appear in notes at all.
   - [R9] "one artifact per section" is a planning rule. It lives in the "本节产物" column of the syllabus and checklist and is checked by hand.
 - **Portal**: `notes_data.js` paths match character for character, `quiz` has 3–5 questions, points total exactly 100, objective questions ≥ 60, `sheet`, `concepts`, both ends of `links`, and md/js question correspondence.
 
-`run-course.mjs` is the machine version of the "read-in-order test": it calls `check-library.mjs --replay-to` to get the `project/` at every 【运行】, runs the commands there (stdout and stderr merged), strips machine-specific absolute paths, and compares with `code/out/`, ignoring traceback frames and timings. If Python is not found it skips with exit 0. **It executes the commands in the notes; run it only on libraries you wrote.**
+`run-course.mjs` is the machine version of the "read-in-order test": it calls `check-library.mjs --replay-to` to get the `project/` at every 【运行】, runs the commands there (stdout and stderr merged), strips machine-specific absolute paths, and compares with `code/out/`, ignoring traceback frames and timings. If Python is not found it skips with exit 0. Each command is killed after 120 s by default (`--timeout` raises it); a truncated output shows up as a mismatch, so suspect the timeout first. For `python -m <pkg>.evaluate / .predict` it first runs `<pkg>.train` silently, because replay snapshots store sources only, not run artifacts. **It executes the commands in the notes; run it only on libraries you wrote.**
 
 Both scripts prove **mechanical consistency** and "following the text actually works". They cannot prove **that the content is correct**, nor whether a reader knows what to do next. That is a human pass driven by `assets/study-notes/references/quality-gates.md` and the manual read-in-order test in section 12 of `teaching-design.md`.
 
 ### 5.1 Teaching-line rules (T1–T5, new in v2.1)
 
-The R1–R11 rules of v2.0.0 guarantee that a reader can *follow* a section and build the artifact. In practice that is not enough: after such a section the reader may be able to name the next file to create, yet not say why the function exists or why it has to be written that way. v2.1 therefore adds a second line of rules, this time about the explanation itself:
+The R1–R13 rules (core in v2.0.0, extended through v2.1.3) guarantee that a reader can *follow* a section and build the artifact. In practice that is not enough: after such a section the reader may be able to name the next file to create, yet not say why the function exists or why it has to be written that way. v2.1 therefore adds a second line of rules, this time about the explanation itself:
 
 | Rule | Requirement |
 |---|---|
@@ -199,6 +203,15 @@ The R1–R11 rules of v2.0.0 guarantee that a reader can *follow* a section and 
 **Important: in 2.1 the T1–T5 rules only ever report warnings; `--strict` does not promote them to errors.** The reason is that this repository's own fixtures and the existing libraries are still written as operation manuals, so enforcing them overnight would make migration impossible. Treat them as hard requirements when writing a new library; the next release can tighten them once the fixtures are rewritten in the four-beat form.
 
 `templates/section-note.md` and `references/teaching-design.md` have been rewritten around the four beats (think → explain → build → read back), so a new library written from the template satisfies T1–T5 naturally.
+
+### 5.2 Escaped backslashes (R13, new in v2.1.3)
+
+A formula that shows up as one token per line (`eta_t =`, `cdot`, `lfloor t/s`) is not a Typora bug: the note holds `\\eta` instead of `\eta`, and TeX reads `\\` as a line break. The second failure mode is quieter — a generating script eats the backslash itself (`\t` → TAB, `\r` → CR, `\n` → LF, `\b` → BS), leaving control characters or split words inside prose (`registry.py` → `egistry.py`).
+
+- Write maths in raw strings (`r"\eta"` in Python, `String.raw` in JS) and never through a PowerShell double-quoted here-string.
+- Run `node templates/fix-math-escapes.mjs "<root>" --dry-run` first, then without `--dry-run` to fix; on a clean library it reports 0 hits (idempotent).
+- `check-library.mjs` reports both cases as [R13] (error under `--strict`), so the class cannot come back unnoticed.
+
 
 ---
 

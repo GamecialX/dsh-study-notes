@@ -23,14 +23,16 @@ import { tmpdir } from 'node:os';
 
 const argv = process.argv.slice(2);
 if (!argv.length || argv.includes('--help') || argv.includes('-h')) {
-  console.log('用法：node run-course.mjs "<笔记根目录>" [--write] [--python "<解释器命令>"]');
+  console.log('用法：node run-course.mjs "<笔记根目录>" [--write] [--python "<解释器命令>"] [--timeout <毫秒>]');
   process.exit(argv.length ? 0 : 2);
 }
 const WRITE = argv.includes('--write');
 let pythonArg;
+let TIMEOUT = 120000;
 const positional = [];
 for (let i = 0; i < argv.length; i += 1) {
   if (argv[i] === '--python') { pythonArg = argv[i + 1]; i += 1; continue; }
+  if (argv[i] === '--timeout') { TIMEOUT = Number(argv[i + 1]) || TIMEOUT; i += 1; continue; }
   if (!argv[i].startsWith('--')) positional.push(argv[i]);
 }
 const ROOT = resolve(positional[0]);
@@ -60,12 +62,31 @@ function findPython() {
 
 function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'); }
 
+/**
+ * 章节项目（`python -m 包名.evaluate` / `.predict`）依赖 `包里前一步 train` 产出的检查点。
+ * 重放快照只保存文本文件（源码），运行产物不在其中，所以这里先把训练静默跑一遍。
+ * 只对"同目录下确实有 `<包名>/train.py`、且没有 runs/ 产物"的情况生效。
+ */
+function warmCapstone(cwd, cmd, python) {
+  const m = /-m\s+([A-Za-z_]\w*)\s*\.\s*(?:evaluate|predict)\b/u.exec(cmd);
+  if (!m) return;
+  const pkg = m[1];
+  if (!existsSync(join(cwd, pkg, 'train.py'))) return;
+  if (existsSync(join(cwd, 'runs')) && readdirSync(join(cwd, 'runs')).length) return;
+  const py = python || 'python';
+  spawnSync(`${py} -m ${pkg}.train 2>&1`, {
+    cwd, shell: true, encoding: 'utf8', timeout: TIMEOUT,
+    env: { ...process.env, PYTHONUNBUFFERED: '1', PYTHONIOENCODING: 'utf-8', PYTHONDONTWRITEBYTECODE: '1' }
+  });
+}
+
 function run(cwd, commands, python) {
   let out = '';
   for (const c of commands) {
     const cmd = python ? c.replace(/^python3?\b/u, python) : c;
+    warmCapstone(cwd, cmd, python);
     const r = spawnSync(`${cmd} 2>&1`, {
-      cwd, shell: true, encoding: 'utf8', timeout: 120000,
+      cwd, shell: true, encoding: 'utf8', timeout: TIMEOUT,
       env: { ...process.env, PYTHONUNBUFFERED: '1', PYTHONIOENCODING: 'utf-8', PYTHONDONTWRITEBYTECODE: '1' }
     });
     out += r.stdout || '';

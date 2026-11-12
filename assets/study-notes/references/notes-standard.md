@@ -217,6 +217,8 @@ Mermaid 在 Typora、GitHub、VS Code 里原生渲染；门户里显示为代码
 
 公式夹在句子中间时保持行内，不要为了"套块级"把句子拆成三行。
 
+**反斜杠只写一层，别让字符串层解析它**：公式里写成 `\\eta` 不是「两个反斜杠更保险」，TeX 读到的是「换行 + eta」——整条公式会退化成每个记号一行（读者看到 `eta_t =`、`cdot` 这类乱码）。另外，用 Python / JS / PowerShell 生成 md 时，`"\t"`、`"\r"`、`"\n"` 会当场被转义：轻则留下控制字符，重则把 `\rho` 吃掉首字母变成 `ho`、把 `registry.py` 拆成 `egistry.py`。做法：Python 里用 raw string（`r"\approx"`、`r"\text{...}"`），JS 用 `String.raw`，PowerShell 里别用双引号 here-string 拼公式；生成完立刻跑校验器（[R13] 报控制字符与 `\\命令名`），批量修复用 `templates/fix-math-escapes.mjs`。
+
 **禁止 `\mathbb`**：Typora 1.14 的内置 MathJax 4 在同步渲染路径上渲染不了它，整条公式会退回源码（读者看到的是 `$$\mathbb{R}^{n}$$`）。花体字母直接写 unicode——`\mathbb{R}` → `ℝ`、`\mathbb{N}` → `ℕ`、`\mathbb{Z}` → `ℤ`、`\mathbb{E}` → `𝔼`；指示函数写 `\mathbf{1}`。细节与实测证据见 `editor-compatibility.md` 第六节，批量替换用 `templates/fix-mathbb.mjs`，校验器以 [R12] 报。
 
 ### 5.4 代码块、标签与输出

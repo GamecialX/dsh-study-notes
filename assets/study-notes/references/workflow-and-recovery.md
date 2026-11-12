@@ -23,7 +23,7 @@
 3. 生成真实输出并校验：
 
    ```bash
-   node <skill>/scripts/run-course.mjs "<根>" --write
+   node <skill>/scripts/run-course.mjs "<根>" --write            # 长演示可加 --timeout 400000（默认 120 秒）
    node <skill>/scripts/check-library.mjs "<根>" --strict --only "Cha_1 章名/C1 Sec_1 节名.md"
    ```
 

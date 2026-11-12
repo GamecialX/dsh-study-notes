@@ -53,6 +53,7 @@ description: "Use when someone wants to learn a subject from zero, or asks for �
 | 旧标注迁移（`> [!note]`、`> **Note**:` → `> <b>*Note*</b>`） | `templates/callout-to-blockquote.mjs` | 老库迁移用；幂等，`--dry-run` 只统计 |
 | 修块级公式定界符（`$` 独占一行 → `$$`） | `templates/fix-math-delims.mjs` | 交付前自检用；幂等，`--fix` 才写盘 |
 | 把 `\mathbb{R}` 批量换成 unicode 花体 `ℝ`（Typora 1.14 的 MathJax 4 渲染不了 `\mathbb`） | `templates/fix-mathbb.mjs` | `--dry` 先看清单；改完重跑 `_维护/build.mjs` 与 `check-library --strict` |
+| 修「反斜杠被吃掉」（公式里写成 `\\命令名`、正文里留下控制字符） | `templates/fix-math-escapes.mjs` | `--dry-run` 先看清单；改完重跑 `_维护/build.mjs` 与 `check-library --strict` |
 | **门户应用本体**（数千行） | `templates/web/index.html` | **用 shell 复制，不要手写、不要重打** |
 | 门户的离线公式引擎（KaTeX 0.16.22 + 60 个字体文件） | `templates/web/vendor/katex/` | 整个目录复制到 `<根>/web/vendor/`；漏了它门户就只能回退 CDN，断网时公式变源码 |
 | Node 兜底静态服务器（无 Python 时用） | `templates/web/serve.mjs` | 一起复制 |
@@ -93,7 +94,7 @@ description: "Use when someone wants to learn a subject from zero, or asks for �
 6. **代码有出生地**：读者看到的每一行代码都写明它住在哪个文件、是新建还是改动。读者的工程在 `<根>/project/`，从空目录开始；`code/` 是**答案与证据区**，读者不在那里写东西。正文代码块一律带标签：【新建】`project/路径`（整份文件，≤ 120 行）、【修改】`project/路径`（```diff，上下各留 1–2 行原样上下文）、【重构】`project/路径`（整个函数或类换掉，并说为什么）、【收口】`project/路径`（本步结束时整份文件应有的样子）。不许节选、不许 `# ...` 省略、不许提前露出后面章节的版本。
 7. **单事实源**：正文只存在于 `.md` 里。`web/notes_data.js` 只放目录结构与题目数据；`file` 路径与真实文件名逐字符一致。题目在 md 与 js 里一一对应。
 
-### 课程线规则 R1–R11
+### 课程线规则 R1–R13
 
 铁律 2、5、6 的可检查细则。校验器按这些编号报 `[R*]`：默认是 warning（老库可以逐节迁移），`--strict` 时是 error。**新库必须在 `--strict` 下 0 error。**
 
@@ -110,10 +111,12 @@ description: "Use when someone wants to learn a subject from zero, or asks for �
 | R9 | 非代码科目有等价物：数学是推导本 / 反例集 / 验算脚本，语言是句子本 / 作文 / 听写，人文是时间线 / 论证稿 / 对照表 |
 | R10 | 篇幅按学时算：每节 3–5 步 × 10–20 分钟，导读写 `预计用时 N 分钟`（30–100）。行数是结果不是目标；超了就拆节 |
 | R11 | 正文、命令、输出里不出现本机绝对路径；脚本打印路径前先转成相对路径 |
+| R12 | 公式里不出现 `\mathbb`：Typora 1.14 内置 MathJax 4 在同步渲染路径上渲染不了它，整条公式退回源码。花体字母写 unicode（ℝ ℕ ℤ ℚ ℂ 𝔼），指示函数写 `\mathbf{1}` |
+| R13 | 公式里不出现 `\\命令名`（TeX 的 `\\` 是换行，会让整条公式退回源码）；正文与公式里不出现控制字符（`\t`/`\r`/`\n` 被字符串层解析后留下的 BEL/BS/TAB/VT/FF 或断行）。生成脚本一律用 raw string，改完复扫 |
 
 ### 讲解线规则 T1–T5
 
-R1–R11 保证"读者做得出来"，T1–T5 保证"读者学得进去"。**代码是实践，不是骨架**：读者不是跟着别人从第一行读到最后一行，而是先想一个问题、听清原理、再动手验证。这五条按硬要求执行；校验器目前以 warning 报 `[T1]`–`[T5]`（`--strict` 也不升级为 error，给老库留迁移空间），但不要因为不判 error 就省掉。
+R1–R13 保证"读者做得出来"，T1–T5 保证"读者学得进去"。**代码是实践，不是骨架**：读者不是跟着别人从第一行读到最后一行，而是先想一个问题、听清原理、再动手验证。这五条按硬要求执行；校验器目前以 warning 报 `[T1]`–`[T5]`（`--strict` 也不升级为 error，给老库留迁移空间），但不要因为不判 error 就省掉。
 
 | 编号 | 规则 |
 |---|---|
@@ -160,7 +163,7 @@ references 里的示例大多取自代码类 / 计算机类 / AI 类课程，只
 
 ### P2.5 · 样章确认（**必须停下来问用户**）
 
-1. 写**第 1 章第 1 节**的完整节笔记（含练习、概念索引、导航），按 R1–R11 写。代码类科目同时生成真实输出：
+1. 写**第 1 章第 1 节**的完整节笔记（含练习、概念索引、导航），按 R1–R13 写。代码类科目同时生成真实输出：
 
    ```bash
    node <skill>/scripts/run-course.mjs "<根>" --write      # 照做重放、真实运行、写 code/out/ 与输出块

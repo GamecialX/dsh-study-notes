@@ -42,6 +42,7 @@
 - [ ] 无 `[[wikilink]]`、`![[嵌入]]`；无 `> [!note]`、`> **Note**:` 旧式标注（warning 也要清掉）
 - [ ] 块级公式 `$$` 各占一行
 - [ ] [R12] 公式里没有 `\mathbb`（Typora 1.14 的 MathJax 4 渲染不了，整条公式会退回源码）；花体字母用 unicode（ℝ ℕ ℤ ℚ ℂ 𝔼），指示函数用 `\mathbf{1}`
+- [ ] [R13] 公式里没有写成 `\\命令名`（TeX 的 `\\` 是换行，整条公式会退回源码）；正文与公式里没有控制字符（反斜杠被字符串层吃掉后剩下的 BEL/BS/TAB/VT/FF）；修完用 `templates/fix-math-escapes.mjs` 复扫
 - [ ] 每篇笔记 frontmatter 有 `subject`、`chapter`、`status`、`tags`（`checklist.md` 豁免）
 - [ ] 每节练习 3–5 题；`notes_data.js` 里每节 `quiz` 3–5 题
 - [ ] `<!-- source: -->` / `<!-- output: -->` 绑定的内容逐行能在对应文件里找到

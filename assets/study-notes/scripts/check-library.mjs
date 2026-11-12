@@ -6,7 +6,7 @@
  *   node check-library.mjs "<笔记根目录>"
  *   node check-library.mjs "<笔记根目录>" --json
  *   node check-library.mjs "<笔记根目录>" --only "Cha_1 章名/C1 Sec_1 节名.md"   # 样章 / 单篇检查
- *   node check-library.mjs "<笔记根目录>" --strict        # 课程线规则（R1–R12）由 warning 升为 error
+ *   node check-library.mjs "<笔记根目录>" --strict        # 课程线规则（R1–R13）由 warning 升为 error
  *   node check-library.mjs "<笔记根目录>" --replay-to "<空目录>"   # 把正文照做一遍，写出每次【运行】时的 project/ 快照
  *   node check-library.mjs --help
  *
@@ -25,7 +25,7 @@ const HELP = `check-library.mjs —— 学习笔记库交付前校验器
   node check-library.mjs "<笔记根目录>"                     人类可读报告
   node check-library.mjs "<笔记根目录>" --json              JSON 输出
   node check-library.mjs "<笔记根目录>" --only "<相对路径>"  只查指定笔记（可重复；样章阶段用）
-  node check-library.mjs "<笔记根目录>" --strict            课程线规则 [R1]–[R12] 的 warning 一律升为 error
+  node check-library.mjs "<笔记根目录>" --strict            课程线规则 [R1]–[R13] 的 warning 一律升为 error
   node check-library.mjs "<笔记根目录>" --replay-to "<目录>" 照正文的【新建】/【修改】/【重构】从空目录重放，
                                                            每遇到一次【运行】就把当时的 project/ 写成一个快照
   node check-library.mjs --help
@@ -46,6 +46,7 @@ const HELP = `check-library.mjs —— 学习笔记库交付前校验器
           [R8] notebook 放 code/notebooks/CN_*.ipynb、不带输出   [R10] 3–5 步、30–100 分钟
           [R11] 正文、命令、输出里没有本机绝对路径
           [R12] 没有 Typora 1.14 渲染不了的 \mathbb（改写 unicode 花体字母）
+          [R13] 公式里没有双反斜杠+命令名、正文里没有控制字符（反斜杠被吃掉会让整条公式退回源码）
           默认 warning（老库不会被一次性判死），--strict 时为 error
   门户    notes_data.js 路径逐字符一致、分值恰为 100、客观题 ≥ 60、md 与 js 的题目对应
 
@@ -316,7 +317,7 @@ if (sheetsMissing.length) {
   warn(`第 ${sheetsMissing.join('、')} 章没有 \`CX 速查.md\`（一页纸的本章速查，见 references/teaching-design.md）。`, '章目录');
 }
 
-/* ------------------------------------------ 课程线（R1–R12）：共用部分 */
+/* ------------------------------------------ 课程线（R1–R13）：共用部分 */
 
 /**
  * 课程线规则是这一版新增的教学结构要求。老库按旧骨架写成，默认只报 warning，
@@ -444,6 +445,46 @@ function checkMathMacros(raw, rel) {
   if (!hits.length) return;
   const sample = hits.slice(0, 3).map((m) => `第 ${lineOf(raw, m.index)} 行 \`${m[0]}\``).join('、');
   lint('R12', `有 ${hits.length} 处 \\mathbb（${sample}）。Typora 1.14 的内置 MathJax 4 在同步渲染路径上渲染不了它，公式会整条退回源码（读者以为"公式坏了"）。花体字母直接写 unicode：\\mathbb{R} → ℝ、\\mathbb{N} → ℕ、\\mathbb{E} → 𝔼；指示函数写 \\mathbf{1}。批量替换：node templates/fix-mathbb.mjs "<笔记根目录>"。`, rel);
+}
+
+/* ------------------------------------------ [R13] 反斜杠被吃掉 / 双反斜杠退化 */
+
+/**
+ * 公式里的反斜杠有两种"消失"方式，读者看到的都是乱码：
+ *   1. 写成 `\\cmd`：TeX 里 `\\` 是换行，于是每个记号单独一行、命令名退化成正文字母
+ *      （C6 Sec_3 的 `\\eta_t=\\eta_0\\cdot…` 就是这样，整条公式退回源码）。
+ *   2. 经过一层字符串处理（Python 的 "\t"/"\r"、JS 模板字符串、PowerShell here-string）：
+ *      留下控制字符（BEL/BS/TAB/VT/FF），或者把 `\r`/`\n` 变成真正的换行、顺手吃掉首字母
+ *      （`registry.py` → `egistry.py`、`\rho` → `ho`）。
+ * 这条规则同时检查"控制字符"与"数学环境里的 `\\`+命令名"。
+ */
+const CTRL_CHARS = /[\x00-\x08\x0b\x0c\x0e-\x1f]/gu;
+const DD_COMMANDS =
+  'alpha|approx|arg|bar|begin|beta|big|binom|bot|bullet|cdot|cdots|cos|delta|dots|ell|' +
+  'emptyset|end|epsilon|eta|exp|forall|frac|gamma|ge|geq|hat|in|infty|int|lambda|langle|' +
+  'ldots|le|left|leq|log|lfloor|lvert|mathbf|mathbb|mathcal|mathrm|max|mid|min|mu|nabla|' +
+  'ne|neq|nu|odot|omega|oplus|otimes|overline|parallel|partial|phi|pi|pm|prod|qquad|quad|' +
+  'rho|rightarrow|rfloor|right|rvert|sigma|sim|sqrt|sum|tanh|tau|text|tfrac|theta|tilde|' +
+  'times|to|top|underbrace|varepsilon|vec|vert|Vert|varphi|wedge|widehat|widetilde|xi|zeta';
+const DD_CMD = new RegExp(`\\\\\\\\(?=(?:${DD_COMMANDS})(?![A-Za-z]))`, 'gu');
+const MATH_SPAN = /\$\$[\s\S]*?\$\$|\$[^$\n]+\$/gu;
+
+function checkMathEscapes(raw, rel) {
+  const text = stripCode(raw);
+  const ctrl = [...text.matchAll(CTRL_CHARS)];
+  const spans = [...text.matchAll(MATH_SPAN)].map((m) => [m.index, m.index + m[0].length]);
+  const doubled = [...text.matchAll(DD_CMD)].filter((m) => spans.some(([a, b]) => m.index > a && m.index < b));
+  const parts = [];
+  if (ctrl.length) {
+    const sample = ctrl.slice(0, 3).map((m) => `第 ${lineOf(text, m.index)} 行（0x${m[0].charCodeAt(0).toString(16).padStart(2, '0')}）`).join('、');
+    parts.push(`${ctrl.length} 处控制字符（${sample}）`);
+  }
+  if (doubled.length) {
+    const sample = doubled.slice(0, 3).map((m) => `第 ${lineOf(text, m.index)} 行`).join('、');
+    parts.push(`${doubled.length} 处数学环境里的双反斜杠 \\\\（${sample}）`);
+  }
+  if (!parts.length) return;
+  lint('R13', `公式/正文里的反斜杠被吃掉了：${parts.join('；')}。写法一：公式里只写**一个**反斜杠（TeX 的 \\\\ 是换行，会让整条公式退回源码）。写法二：别让字符串层解析反斜杠——Python 里用 raw string（r"\\approx"）、PowerShell 里别用双引号 here-string、生成 md 的脚本写完就扫一遍控制字符。修复：node templates/fix-math-escapes.mjs "<笔记根目录>"（先加 --dry-run 看清单）。`, rel);
 }
 
 /* ------------------------------------------ [R4][R8] 不许引用未来 */
@@ -975,6 +1016,7 @@ for (const file of targets) {
   const chapterOfFile = CH_DIR.exec(rel.split('/')[0] || '');
   if (!isLog) checkAbsolutePaths(raw, rel);
   if (!isLog) checkMathMacros(raw, rel);
+  if (!isLog) checkMathEscapes(raw, rel);
   if (chapterOfFile) checkLeaks(raw, rel, Number(chapterOfFile[1]));
   if (secMatch && chapterOfFile) checkCourseLine(file, raw, rel, Number(secMatch[1]), Number(secMatch[2]), chapterOfFile[2]);
 
@@ -1383,7 +1425,7 @@ if (asJson) {
   console.log('');
   if (!problems.length) console.log('OK：没有发现问题。');
   const courseCount = problems.filter((p) => /^\[R\d+\]/u.test(p.message)).length;
-  if (courseCount && !strict) console.log(`其中 ${courseCount} 条是课程线规则 [R1]–[R12]（默认 warning；新库请用 --strict 验收）。`);
+  if (courseCount && !strict) console.log(`其中 ${courseCount} 条是课程线规则 [R1]–[R13]（默认 warning；新库请用 --strict 验收）。`);
   console.log(`SUMMARY ERRORS=${errors.length} WARNINGS=${warns.length}${partial ? ' (--only)' : ''}${strict ? ' (--strict)' : ''} ROOT=${root}`);
 }
 
