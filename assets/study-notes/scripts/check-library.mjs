@@ -42,6 +42,7 @@ const HELP = `check-library.mjs —— 学习笔记库交付前校验器
           [R2] 承接块与留给下一节   [R3] 概念是步骤里的节点（### 或被步骤包夹的 ##），全库统一
           [R4] 代码块带【新建】/【修改】/【重构】/【收口】标签；照做重放与 code/answer/chNN/ 同构；
                不引用晚于本章的答案或 notebook；读者不在 code/ 里建东西
+               【提供】\`project/…\` 声明课件给的文件（本章 _提供/ 下），章首播种进重放，不要求代码块
           [R5] 导读写「你现在手上 / 本节结束时」   [R6] 章末通跑   [R7] 章末项目地图（非代码科目是产物目录）
           [R8] notebook 放 code/notebooks/CN_*.ipynb、不带输出   [R10] 3–5 步、30–100 分钟
           [R11] 正文、命令、输出里没有本机绝对路径
@@ -343,7 +344,7 @@ const CODE_LANGS = new Set([
   'clojure', 'perl', 'zig', 'nim', 'solidity', 'diff'
 ]);
 const SHELL_LANGS = new Set(['bash', 'sh', 'shell', 'zsh', 'powershell', 'ps1', 'pwsh', 'cmd', 'bat', 'console']);
-const OP_LABEL = /^[ \t]*(?:>[ \t]?)*【(新建|修改|重构|收口|运行)】(.*)$/u;
+const OP_LABEL = /^[ \t]*(?:>[ \t]?)*【(新建|修改|重构|收口|运行|提供)】(.*)$/u;
 const OUTPUT_MARK = /<!--\s*output\s*:\s*([^>]+?)\s*-->/u;
 const ELLIPSIS_LINE = /^\s*(?:\.\.\.|…+|(?:#|\/\/|\/\*|--)\s*(?:\.\.\.|…+).*)\s*$/u;
 const DEF_LINE = /^(\s*)(?:export\s+)?(?:async\s+)?(def|class|function)\s+([A-Za-z_$][\w$]*)/u;
@@ -557,13 +558,13 @@ function checkCourseLine(file, raw, rel, chapterNo, sectionNo, chapterName) {
     const next = h2.find((h) => h.line > s.line && h.kind !== 'concept');
     const seg = segmentText(p, s.line, next ? next.line : endOfSteps);
     const miss = [];
-    if (!/【(?:新建|修改|重构|收口|运行)】|<b>动手<\/b>/u.test(seg)) miss.push('动作');
+    if (!/【(?:新建|修改|重构|收口|运行|提供)】|<b>动手<\/b>/u.test(seg)) miss.push('动作');
     if (!/<!--\s*output\s*:|你应该看到/u.test(seg)) miss.push('可见结果');
     if (!/为什么/u.test(seg)) miss.push('为什么');
     if (miss.length) thin.push(`第 ${i + 1} 步缺${miss.join('、')}`);
   });
   if (thin.length) {
-    lint('R1', `每一步都要有「动作 → 可见结果 → 为什么」：${thin.join('；')}。动作写【新建】/【修改】/【重构】/【收口】/【运行】或 <b>动手</b>：…；结果写 <b>你应该看到</b>：… 或绑定的真实输出。`, rel);
+    lint('R1', `每一步都要有「动作 → 可见结果 → 为什么」：${thin.join('；')}。动作写【新建】/【修改】/【重构】/【收口】/【运行】/【提供】或 <b>动手</b>：…；结果写 <b>你应该看到</b>：… 或绑定的真实输出。`, rel);
   }
 
   /* T1–T5：讲解线（先想 → 讲 → 做 → 看）。2.1 版只报 warning。
@@ -693,6 +694,15 @@ function checkCourseLine(file, raw, rel, chapterNo, sectionNo, chapterName) {
     const where = `${rel}:${op.line}`;
     if (op.kind === '运行') {
       if (!op.fence) lint('R4', '【运行】后面没有命令代码块。', where);
+      continue;
+    }
+    /* 【提供】声明的是课件已经放好的文件（<章目录>/_提供/），正文不需要再贴一份代码块。 */
+    if (op.kind === '提供') {
+      if (!op.path) { lint('R4', '【提供】没写路径：标签后第一个行内代码应是 `project/…`；目录以 `/` 结尾会递归播种整个目录。', where); continue; }
+      if (!/^project\//u.test(op.path)) {
+        lint('R4', `【提供】的路径 \`${op.path}\` 不在 \`project/\` 下：它声明的是读者工程里该有的文件，源文件放在本章目录的 \`_提供/\` 里。`, where);
+        continue;
+      }
       continue;
     }
     if (op.kind !== '收口' && !op.fence) { lint('R4', `【${op.kind}】后面没有紧跟代码块。`, where); continue; }
@@ -850,8 +860,42 @@ function writeSnapshot(dir, state, meta) {
 }
 
 /**
+ * 把一条【提供】声明的课件文件从 <章目录>/_提供/ 播种进内存里的 project/。
+ * 目录形式（`project/competition/`，路径以 `/` 结尾）递归播种整棵目录；
+ * 单文件形式（`project/prepare_data.py`）只播种一个文件。成功返回 undefined，失败返回原因。
+ */
+function seedProvided(state, op, ch) {
+  const rel = op.path.replace(/^project\//u, '').replace(/\/+$/u, '');
+  const dirForm = /\/$/u.test(op.path);
+  const shown = `${ch.dir}/_提供/${rel}${dirForm && rel ? '/' : ''}`;
+  const src = join(ch.path, '_提供', ...rel.split('/'));
+  const missing = `【提供】的 \`${op.path}\` 在 \`${shown}\` 里找不到文件：课件要提供它，读者才能照着复制。`;
+  if (!existsSync(src)) return missing;
+  if (dirForm) {
+    if (!statSync(src).isDirectory()) return `${missing}（\`${shown}\` 不是目录）`;
+    let seeded = 0;
+    const visit = (abs, prefix) => {
+      for (const e of readdirSync(abs, { withFileTypes: true })) {
+        if (SNAPSHOT_IGNORE.has(e.name) || e.name.endsWith('.pyc')) continue;
+        const full = join(abs, e.name);
+        if (e.isDirectory()) visit(full, `${prefix}${e.name}/`);
+        else if (e.isFile()) {
+          state.set(`${rel ? `${rel}/` : ''}${prefix}${e.name}`, normText(readFileSync(full, 'utf8')));
+          seeded += 1;
+        }
+      }
+    };
+    visit(src, '');
+    return seeded ? undefined : missing;
+  }
+  if (!statSync(src).isFile()) return missing;
+  state.set(rel, normText(readFileSync(src, 'utf8')));
+  return undefined;
+}
+
+/**
  * 从空目录开始，按章、按节、按出现顺序执行正文里的【新建】/【修改】/【重构】/【收口】，
- * 证明「读者照做能敲出来」；章末与 code/answer/chNN/ 逐文件比对，证明答案区与正文同构。
+ * 【提供】声明的课件文件在章首整章播种；章末与 code/answer/chNN/ 逐文件比对，证明答案区与正文同构。
  */
 function replayCourse(targetFiles) {
   let carry = new Map();
@@ -860,6 +904,15 @@ function replayCourse(targetFiles) {
     if (/毕业设计/u.test(ch.name)) continue;
     const prevAnswer = ch.no > 1 ? answerDir(ch.no - 1) : undefined;
     const state = prevAnswer ? readTree(prevAnswer) : new Map(carry);
+    /* 【提供】是章节级声明：先把整章课件给的文件播种好，再按步重放；它写在哪一节都不影响结果。 */
+    for (const s of ch.sections) {
+      const rel = `${ch.dir}/${s.file}`;
+      for (const op of courseOf(s.path, rel).ops) {
+        if (op.kind !== '提供' || !op.path || !/^project\//u.test(op.path)) continue;
+        const why = seedProvided(state, op, ch);
+        if (why && (!targetFiles || targetFiles.has(s.path))) lint('R4', why, `${rel}:${op.line}`);
+      }
+    }
     let chapterOps = 0;
     for (const s of ch.sections) {
       const rel = `${ch.dir}/${s.file}`;
@@ -881,6 +934,11 @@ function replayCourse(targetFiles) {
           }
           continue;
         }
+        if (op.kind === '提供') {
+          /* 播种已在章首做过，这里只把它算作一次「本章有施工操作」，不参与 state 修改。 */
+          if (op.path && /^project\//u.test(op.path)) chapterOps += 1;
+          continue;
+        }
         if (!op.fence && op.kind !== '收口') continue;
         if (!op.path || !/^project\//u.test(op.path)) continue;
         chapterOps += 1;
@@ -894,7 +952,7 @@ function replayCourse(targetFiles) {
     const ans = answerDir(ch.no);
     if (!targetFiles && chapterOps) {
       if (!ans) {
-        lint('R4', `第 ${ch.no} 章有 ${chapterOps} 处【新建】/【修改】/【重构】，但没有收口快照 \`code/answer/ch${String(ch.no).padStart(2, '0')}/\`（与 project/ 同构的本章答案）。`, ch.dir);
+        lint('R4', `第 ${ch.no} 章有 ${chapterOps} 处【新建】/【修改】/【重构】/【提供】，但没有收口快照 \`code/answer/ch${String(ch.no).padStart(2, '0')}/\`（与 project/ 同构的本章答案）。`, ch.dir);
       } else {
         const answer = readTree(ans);
         const missing = [...state.keys()].filter((k) => !answer.has(k));

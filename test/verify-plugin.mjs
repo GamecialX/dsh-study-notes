@@ -7,9 +7,10 @@
  * 退出码 0 = 全部通过。
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, cpSync, rmSync, copyFileSync, openSync, closeSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -346,6 +347,87 @@ if (D) {
     }
   }
   ok('links 为非空数组', Array.isArray(D.links) && D.links.length > 0);
+}
+
+/* ------------------------------------- 6. 【提供】课件文件的播种（v2.2.0） */
+
+section('6. 【提供】：课件给的文件从 _提供/ 播种进重放');
+
+const SAMPLE = join(HERE, 'fixtures', 'progressive-ch1');
+const CH1 = 'Cha_1 会求导的数';
+const SEC1 = join(CH1, 'C1 Sec_1 工作台与数值导数.md');
+
+/* 合规样章 + 门户模板；再塞进【提供】需要的两样东西：章目录下的 _提供/，和答案区里对应的文件。 */
+function buildProvideLib() {
+  const lib = mkdtempSync(join(tmpdir(), 'dsh-provide-'));
+  cpSync(SAMPLE, lib, { recursive: true });
+  for (const [from, to] of [
+    [join(SKILL_DIR, 'templates', 'web', 'index.html'), 'web/index.html'],
+    [join(SKILL_DIR, 'templates', 'web', 'serve.mjs'), 'web/serve.mjs'],
+    [join(SKILL_DIR, 'templates', '启动学习服务器.bat'), '启动学习服务器.bat'],
+    [join(SKILL_DIR, 'templates', 'start_server.sh'), 'start_server.sh']
+  ]) copyFileSync(from, join(lib, to));
+
+  const given = join(lib, CH1, '_提供');
+  mkdirSync(join(given, 'give', 'sub'), { recursive: true });
+  writeFileSync(join(given, 'give', 'corpus.py'), 'GIVEN = "组委会给的语料"\n', 'utf8');
+  writeFileSync(join(given, 'give', 'sub', 'metrics.py'), 'def score(x):\n    return x\n', 'utf8');
+  mkdirSync(join(given, 'minigrad'), { recursive: true });
+  writeFileSync(join(given, 'minigrad', 'given.py'), 'GIVEN_VALUE = 1\n', 'utf8');
+
+  const answer = join(lib, 'code', 'answer', 'ch01');
+  mkdirSync(join(answer, 'give', 'sub'), { recursive: true });
+  writeFileSync(join(answer, 'give', 'corpus.py'), 'GIVEN = "组委会给的语料"\n', 'utf8');
+  writeFileSync(join(answer, 'give', 'sub', 'metrics.py'), 'def score(x):\n    return x\n', 'utf8');
+  writeFileSync(join(answer, 'minigrad', 'given.py'), 'GIVEN_VALUE = 1\n', 'utf8');
+
+  const raw = readFileSync(join(lib, SEC1), 'utf8');
+  const marker = '<b>为什么这样做</b>：文件夹里有了 `__init__.py`';
+  const provide = [
+    '【提供】`project/give/`（组委会给的语料与指标，本章 `_提供/give/` 下就是这些文件，复制到 `project/` 即可用。）',
+    '',
+    '【提供】`project/minigrad/given.py`（组委会给的现成文件，直接复制即可用。）',
+    '',
+    marker
+  ].join('\n');
+  writeFileSync(join(lib, SEC1), raw.replace(marker, provide), 'utf8');
+  return lib;
+}
+
+/* 沙箱下不能用管道捕获子进程输出，改成把 stdout/stderr 重定向到文件再读。 */
+function runCheckerOn(lib) {
+  const outFile = join(lib, '.check.out');
+  const fd = openSync(outFile, 'w');
+  let status;
+  try {
+    status = spawnSync(process.execPath, [join(SKILL_DIR, 'scripts', 'check-library.mjs'), lib, '--strict'],
+      { stdio: ['ignore', fd, fd] }).status;
+  } finally { closeSync(fd); }
+  return { status, out: readFileSync(outFile, 'utf8') };
+}
+
+{
+  const lib = buildProvideLib();
+  try {
+    const r = runCheckerOn(lib);
+    ok('【提供】目录/单文件播种 → --strict 0 error', r.status === 0 && r.out.includes('SUMMARY ERRORS=0'), r.out.slice(0, 1600));
+    ok('【提供】播种后 R4 不报「答案区多出」，也不要求紧跟代码块',
+      !r.out.includes('[R4]') && !r.out.includes('后面没有紧跟代码块'), r.out.slice(0, 1600));
+  } finally { rmSync(lib, { recursive: true, force: true }); }
+}
+
+{
+  const lib = buildProvideLib();
+  try {
+    rmSync(join(lib, CH1, '_提供', 'give'), { recursive: true, force: true });
+    const r = runCheckerOn(lib);
+    ok('【提供】的目录在 _提供/ 下缺失 → 报 R4 且点明两个路径',
+      r.status === 1 && r.out.includes('[R4]') &&
+      r.out.includes('【提供】的 `project/give/`') && r.out.includes('_提供/give/') &&
+      r.out.includes('找不到文件：课件要提供它，读者才能照着复制。'), r.out.slice(0, 1600));
+    ok('【提供】缺目录时不再把「答案区多出」当成唯一理由',
+      r.out.includes('答案区多出'), r.out.slice(0, 1600));
+  } finally { rmSync(lib, { recursive: true, force: true }); }
 }
 
 console.log(`\nSUMMARY CHECKS=${checks} FAILURES=${failures}`);

@@ -20,8 +20,8 @@ Once `study-notes` is loaded, the agent produces the following under the notes r
 | Artifact | Purpose |
 |---|---|
 | `00 大纲.md` | Whole-library entry page: subject overview, **how to follow this course**, per-section "artifact / where you start typing", and a concept lookup table (for lookup only; the course itself is read in order) |
-| `Cha_X 章名/` | Per chapter: section notes (`## 接上一节` → 3–5 `## 第 N 步：` steps → summary → exercises, with concepts as `### 概念 N：` inside the step that first needs them), `CX 速查.md`, `CX 测试.md`, `src/` diagram sources; the last section has a chapter smoke run and a project map |
-| `project/` (the reader's) | The reader's own workspace. It starts empty and grows step by step through the labels 【新建】 (create) / 【修改】 (diff) / 【重构】 (replace by name) / 【收口】 (wrap up) / 【运行】 (run); the agent never puts anything in it |
+| `Cha_X 章名/` | Per chapter: section notes (`## 接上一节` → 3–5 `## 第 N 步：` steps → summary → exercises, with concepts as `### 概念 N：` inside the step that first needs them), `CX 速查.md`, `CX 测试.md`, `src/` diagram sources, `_提供/` course-provided files (declared with 【提供】, see 5.3); the last section has a chapter smoke run and a project map |
+| `project/` (the reader's) | The reader's own workspace. It starts empty and grows step by step through the labels 【新建】 (create) / 【修改】 (diff) / 【重构】 (replace by name) / 【收口】 (wrap up) / 【运行】 (run); 【提供】 declares files the course provides (copied from the chapter's `_提供/`, not hand-written); the agent never puts anything in it |
 | `code/` (answers and evidence, code-heavy subjects) | `code/answer/chNN/`: what `project/` should look like after chapter N; `code/out/`: the real output of every 【运行】 (bound with `<!-- output: -->`); `code/notebooks/CN_*.ipynb`: demo notebooks without outputs || `checklist.md` | Working record: plan table, progress pointer, recovery context (including the confirmed sample-section conventions), changelog |
 | `web/index.html` | Single-file learning portal (black mechanical style × frosted glass, all CSS/JS inlined) |
 | `web/vendor/katex/` | Offline math engine (KaTeX 0.16.22, ~1.3 MB; formulas render even without network) |
@@ -175,7 +175,7 @@ node assets/study-notes/scripts/run-course.mjs "<notes-root>" --timeout 400000  
   - [R1] section order is intro → 接上一节 → 3–5 steps → summary → exercises → concept index, and every step has "action → visible result → why";
   - [R2] a `## 接上一节` bridge (what the last section built / what it left open / what this section adds) and a closing "留给下一节" hook;
   - [R3] concepts are nodes inside steps (`### 概念 N：`, or a `## 概念 N：` sandwiched between two steps), one style across the library;
-  - [R4] code blocks carry 【新建】/【修改】(diff)/【重构】/【收口】 labels with a path under `project/`, no "excerpt" blocks and no elided lines; replaying the text from an empty directory must succeed and the end of each chapter must match `code/answer/chNN/`; no references to answers or notebooks from later chapters; the reader never works inside `code/`;
+  - [R4] code blocks carry 【新建】/【修改】(diff)/【重构】/【收口】 labels with a path under `project/`, no "excerpt" blocks and no elided lines; replaying the text from an empty directory must succeed and the end of each chapter must match `code/answer/chNN/`; no references to answers or notebooks from later chapters; the reader never works inside `code/`; 【提供】 declares course-provided files (seeded from `<chapter>/_提供/` before replay; a missing source is also an [R4]);
   - [R5] the intro states "what you have now" and "what you will have at the end"; [R6] chapter smoke run (one command + real output); [R7] chapter project map (for non-code subjects, a table of contents of the artifact; no `project/` required);
   - [R8] notebooks live in `code/notebooks/CN_*.ipynb` without outputs; [R10] 3–5 steps and 30–100 minutes per section;
   - [R11] no machine-specific absolute paths in text, commands or output;
@@ -190,7 +190,7 @@ Both scripts prove **mechanical consistency** and "following the text actually w
 
 ### 5.1 Teaching-line rules (T1–T5, new in v2.1)
 
-The R1–R13 rules (core in v2.0.0, extended through v2.1.3) guarantee that a reader can *follow* a section and build the artifact. In practice that is not enough: after such a section the reader may be able to name the next file to create, yet not say why the function exists or why it has to be written that way. v2.1 therefore adds a second line of rules, this time about the explanation itself:
+The R1–R13 rules (core in v2.0.0, extended through v2.2.0) guarantee that a reader can *follow* a section and build the artifact. In practice that is not enough: after such a section the reader may be able to name the next file to create, yet not say why the function exists or why it has to be written that way. v2.1 therefore adds a second line of rules, this time about the explanation itself:
 
 | Rule | Requirement |
 |---|---|
@@ -212,6 +212,18 @@ A formula that shows up as one token per line (`eta_t =`, `cdot`, `lfloor t/s`) 
 - Run `node templates/fix-math-escapes.mjs "<root>" --dry-run` first, then without `--dry-run` to fix; on a clean library it reports 0 hits (idempotent).
 - `check-library.mjs` reports both cases as [R13] (error under `--strict`), so the class cannot come back unnoticed.
 
+### 5.3 【提供】— course-provided infrastructure (new in v2.2.0)
+
+Competitions and homework packs ship a layer of "infrastructure": corpus generators, dataset loaders, metrics and scoring scripts, the competition skeleton. The reader should not hand-write these (they are not what the chapter teaches), and they are too long to put in the text without breaking T5 ("prose is not shorter than the code"). Put them in the chapter's `_提供/` and declare them once in the text:
+
+````markdown
+【提供】`project/competition/`（组委会给的赛题骨架：语料生成、图像数据、指标与评分。本章 `_提供/competition/` 下就是这些文件，复制到 `project/` 即可用。）
+````
+
+- The path must start with `project/`. A trailing `/` means **directory form**: every file under `<chapter>/_提供/competition/` (recursively) is seeded as `project/competition/<relative path>`; otherwise it is **single-file form** (`project/prepare_data.py` ← `_提供/prepare_data.py`).
+- One path per line, several lines for several files; no code block is required, and it is excluded from the elided-line / 120-line fence checks.
+- Before replaying a chapter the checker seeds every 【提供】 of that chapter into `project/`, so files in `code/answer/chNN/` are not reported as "extra"; a missing source under `_提供/` is reported as [R4] with both paths.
+- Two rules: **the reader must still be able to understand it** (one sentence saying what it provides and that they should not change it), and **write it yourself when you can** (the core mechanism still has to be typed line by line).
 
 ---
 
@@ -244,6 +256,7 @@ Count the findings per `[R*]` number to see which rules and which chapters carry
 4. **Turn finished code into the reader's own code (R4)**:
    - today's `code/` is the final version of the whole book. Put the state **at the end of this chapter** into `code/answer/chNN/`, stripping classes and functions that only later chapters add; otherwise you leak future versions to the reader;
    - rewrite code blocks as labelled operations: 【新建】`project/…` (whole file), 【修改】`project/…` (a ```diff block with context lines), 【重构】`project/…` (replace a function by name), 【收口】, 【运行】 (a command block). Delete every "excerpt" and every `...` elision;
+   - course-provided infrastructure (competition/homework skeletons, dataset loaders, metrics and scoring scripts) should not be hand-written by the reader: put it in `Cha_X …/_提供/` and declare it with 【提供】`project/…`, which is seeded into `project/` during replay;
    - move commands that make the reader create things in `code/` (such as `mkdir -p code/xxx`) to `project/`.
 5. **Generate real output and the answer snapshot**:
 
