@@ -7,7 +7,7 @@
 
 A DeepSeek Harness plugin (bundle) that registers one skill into the current profile:
 
-> **`study-notes`** — when the user wants to learn a subject from zero and asks for "study notes / teaching docs / a handout / textbook-style notes", it drives the agent to build **a course you can follow from top to bottom**, not a concept encyclopedia: every section grows one checkable artifact in the reader's own `project/` (for non-programming subjects: a derivation notebook, a sentence book, a timeline…), the next section continues from it, and each concept appears inside the step that first needs it. It comes with figures, 3–5 exercises per section, a per-chapter cheat sheet, a 100-point chapter test with cross-chapter review, and a local web learning portal (single-file app plus a one-click launcher). Notes are Typora-first **standard Markdown**. For a brand-new course the agent writes **one sample section first** and waits for the user to confirm the style before generating the rest.
+> **`study-notes`** — when the user wants to learn a subject from zero and asks for "study notes / teaching docs / a handout / textbook-style notes", it drives the agent to build **a course you can follow from top to bottom**, not a concept encyclopedia: every section grows one checkable artifact in the reader's own `project/` (for non-programming subjects: a derivation notebook, a sentence book, a timeline…), the next section continues from it, and each concept appears inside the step that first needs it. It comes with figures, 3–5 exercises per section, a per-chapter cheat sheet, a 100-point chapter test with cross-chapter review, and a local web learning portal (single-file app plus a one-click launcher). Notes are Typora-first **standard Markdown**. For a brand-new course the agent writes **one sample section first** and waits for the user to confirm the style before generating the rest. Theory courses (no engineering artifact, core skill is understanding and discrimination) follow a second line: the artifact is a **knowledge scroll** (concept maps, timelines, argument drafts), hands-on work is light, and each chapter ends with a closed-book retelling; they can also run **chapter by chapter, stopping for feedback** instead of writing everything in one go.
 
 Zero dependencies, no build step, installs offline. `index.js` imports only `node:` built-ins.
 
@@ -97,9 +97,10 @@ dsh-study-notes/
 │   │   ├── quality-gates.md             # content red lines + engineering red lines + manual self-check
 │   │   ├── portal-standard.md           # portal data contract (concepts / sheet), views, rendering, grading, launcher
 │   │   ├── editor-compatibility.md      # Typora pitfalls: why no callouts, how to debug missing formulas
-│   │   └── subject-playbooks.md         # per-domain playbooks: math / code / language / humanities / hands-on / exam prep
+│   │   ├── theory-line.md               # theory line: L1–L8, knowledge scroll, citation rules, how to split mixed courses
+│   │   └── subject-playbooks.md         # per-domain playbooks: math / code / language / humanities / hands-on / exam prep / pure theory
 │   ├── templates/         # skeletons to copy and fill
-│   │   ├── syllabus.md checklist.md section-note.md cheat-sheet.md
+│   │   ├── syllabus.md checklist.md section-note.md section-note-theory.md cheat-sheet.md
 │   │   ├── chapter-test.md capstone.md
 │   │   ├── callout-to-blockquote.mjs     # legacy callouts ([!note] / **Note**:) → <b>*Note*</b> (idempotent)
 │   │   ├── fix-math-delims.mjs           # block formula delimiter $ → $$ (idempotent, writes only with --fix)
@@ -177,7 +178,7 @@ node assets/study-notes/scripts/run-course.mjs "<notes-root>" --timeout 400000  
   - [R3] concepts are nodes inside steps (`### 概念 N：`, or a `## 概念 N：` sandwiched between two steps), one style across the library;
   - [R4] code blocks carry 【新建】/【修改】(diff)/【重构】/【收口】 labels with a path under `project/`, no "excerpt" blocks and no elided lines; replaying the text from an empty directory must succeed and the end of each chapter must match `code/answer/chNN/`; no references to answers or notebooks from later chapters; the reader never works inside `code/`; 【提供】 declares course-provided files (seeded from `<chapter>/_提供/` before replay; a missing source is also an [R4]);
   - [R5] the intro states "what you have now" and "what you will have at the end"; [R6] chapter smoke run (one command + real output); [R7] chapter project map (for non-code subjects, a table of contents of the artifact; no `project/` required);
-  - [R8] notebooks live in `code/notebooks/CN_*.ipynb` without outputs; [R10] 3–5 steps and 30–100 minutes per section;
+  - [R8] notebooks live in `code/notebooks/CN_*.ipynb` as the reader's practice ground (one thing per cell, quick experiments); shipped without outputs, and the text must not depend on their output alone; [R10] 3–5 steps and 30–100 minutes per section;
   - [R11] no machine-specific absolute paths in text, commands or output;
   - [R12] no `\mathbb{…}` in maths (Typora 1.14 ships MathJax 4 and renders the whole formula as raw source) — use unicode ℝ/𝔼 and `\mathbf{1}`;
   - [R13] a single layer of backslashes only: inside maths `\\command` is a line break, not a command, and control characters (TAB/CR/FF/BS/BEL/VT left over from string escaping) must not appear in notes at all.
@@ -225,8 +226,27 @@ Competitions and homework packs ship a layer of "infrastructure": corpus generat
 - Before replaying a chapter the checker seeds every 【提供】 of that chapter into `project/`, so files in `code/answer/chNN/` are not reported as "extra"; a missing source under `_提供/` is reported as [R4] with both paths.
 - Two rules: **the reader must still be able to understand it** (one sentence saying what it provides and that they should not change it), and **write it yourself when you can** (the core mechanism still has to be typed line by line).
 
----
+### 5.4 Theory line and chapter-by-chapter feedback (new in v2.3.0)
 
+R1–R13 assume there is an engineering artifact that can be typed line by line. Philosophy, history, law, and conceptual maths have no `project/`; forcing the skeleton onto them produces a glossary that reads like an operation manual. v2.3 adds a line for courses with no engineering artifact, plus two generation rhythms:
+
+| Rule | Requirement |
+|---|---|
+| L1 four beats stay | think → explain → do → read back; only "do" becomes light hands-on work (≤ 30 min: work one route by hand, draw a comparison table, retell a section with the book closed), written as a paired `<b>动手</b>：…` + `<b>你应该看到</b>：…` |
+| L2 the artifact is a knowledge scroll | concept maps (Mermaid `flowchart`/`mindmap`), timelines, comparison tables, derivations or argument drafts, accumulating section by section, checkable and revisable; no `project/` |
+| L3 explanation is the body | every step spends ≥ 60% of its lines on *why*; T1/T2/T5 still apply |
+| L4 one structure diagram per chapter | at least one Mermaid diagram or table showing how the chapter's concepts relate |
+| L5 citation policy | only four kinds of hard fact get an inline source: numbers, dates, state-of-the-art claims, institutional or personal attribution; summarize them at the chapter end under `### 来源与时效` (H3 — as `##` it fails R1); when unsure write 「此处存疑」 and **never invent a source** |
+| L6 chapter smoke run | retell the chapter with the book closed plus a timed self-test; "本章项目地图" becomes the scroll's table of contents |
+| L7 three exercise types | discriminate, retell, apply |
+| L8 local code lessons | a section or step that genuinely runs code is written along the practice line; notebooks still obey R8 |
+
+- Which line to take, how to split a mixed course per chapter (the syllabus table marks `类型：理论 / 实践`), and the exact citation forms are in `assets/study-notes/references/theory-line.md`; the section template is `templates/section-note-theory.md`.
+- **L1–L8 are not machine-checked**: the scripts only verify structure and bindings. Whether a theory chapter actually explains things is a human pass before delivery (`quality-gates.md`).
+- **Two rhythms**: P0 asks once — **chapter by chapter** (each chapter is delivered with 🟦, the agent waits for feedback and only then starts the next one; it volunteers a "what you might want to change" list after the first chapter only) or **continuous** (after the sample section is approved, generate straight through, stopping only at P0/P2.5). Neither may stop in the middle of a section.
+- The same P0 also asks about the **output carrier**: today only Typora-first Markdown plus the local portal exists, and the agent says so instead of pretending other formats are supported.
+
+---
 ## 6. 老库怎么按新结构逐步迁移 (migrating an existing library step by step)
 
 Libraries generated before v2.0.0 use a "concept card" skeleton: each section is a row of `## 概念 N：` blocks, and code is excerpted from a finished `code/` tree. The new checker raises **no new errors** on such libraries. It lists course-line problems as `[R*]` warnings, so you can migrate one section at a time instead of rewriting everything at once. For reference, three existing libraries checked read-only in default mode all had 0 errors and roughly 370, 220 and 250 course-line warnings.
@@ -306,5 +326,5 @@ Count the findings per `[R*]` number to see which rules and which chapters carry
 
 MIT © 2026 [GamecialX](https://github.com/GamecialX). See [LICENSE](LICENSE).
 
-- Want to change something or open a PR? Run `npm test` first (163 plugin assertions, the checker end-to-end fixture and the real run of the sample chapter) and keep it green.
+- Want to change something or open a PR? Run `npm test` first (173 plugin assertions, the checker end-to-end fixture and the real run of the sample chapter) and keep it green.
 - Want to run it on your own subject? See "5. Validating a generated library" above; for an existing library, see "6. 老库怎么按新结构逐步迁移".

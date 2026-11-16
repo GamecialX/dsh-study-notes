@@ -271,10 +271,12 @@ for (const rel of [
   'references/portal-standard.md',
   'references/workflow-and-recovery.md',
   'references/quality-gates.md',
+  'references/theory-line.md',
   'references/subject-playbooks.md',
   'templates/syllabus.md',
   'templates/checklist.md',
   'templates/section-note.md',
+  'templates/section-note-theory.md',
   'templates/cheat-sheet.md',
   'templates/callout-to-blockquote.mjs',
   'templates/fix-math-delims.mjs',
@@ -310,7 +312,7 @@ ok('.sh 探测 python3/node', sh.includes('python3') && sh.includes('node'));
 ok('.sh 默认端口 8765', sh.includes('8765'));
 ok('.sh 真实 bind 测试端口', sh.includes('socket') && sh.includes('createServer'));
 
-for (const rel of ['templates/syllabus.md', 'templates/checklist.md', 'templates/section-note.md', 'templates/cheat-sheet.md', 'templates/chapter-test.md', 'templates/capstone.md']) {
+for (const rel of ['templates/syllabus.md', 'templates/checklist.md', 'templates/section-note.md', 'templates/section-note-theory.md', 'templates/cheat-sheet.md', 'templates/chapter-test.md', 'templates/capstone.md']) {
   const text = readFileSync(join(SKILL_DIR, rel), 'utf8');
   ok(`${rel}: 无被编码的占位符链接（%7B%7B）`, !text.includes('%7B%7B'));
   ok(`${rel}: 无旧式概念编号 CX-NN`, !/C(?:\d+|\{\{[A-Z_]+\}\})-\d{2}/u.test(text));

@@ -1,7 +1,7 @@
 {
   "name": "dsh-study-notes",
-  "version": "2.2.0",
-  "description": "Study-notes skill provider: plan a syllabus and teach a subject as 3–5 mini-lessons per section (question → think → explain with the maths → hands-on practice → read back), where each lesson grows one runnable artifact from an empty project, with a replay checker, teaching-line lint, Typora 1.14 math compatibility lint, offline KaTeX for the local web portal, and gradable tests.",
+  "version": "2.3.0",
+  "description": "Study-notes skill provider: plan a syllabus and teach a subject as 3–5 mini-lessons per section (question → think → explain with the maths → hands-on practice → read back), where each lesson grows one runnable artifact from an empty project — or, for theory courses, a knowledge scroll of concept maps, timelines and arguments with cited sources — with chapter-by-chapter feedback or continuous mode, a replay checker, teaching-line lint, Typora 1.14 math compatibility lint, offline KaTeX for the local web portal, and gradable tests.",
   "type": "module",
   "exports": {
     ".": "./index.js",
