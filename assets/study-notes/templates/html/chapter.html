@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{章标题}} · {{库名}}</title>
+<link rel="stylesheet" href="../src/css/theme.css">
+<script src="../src/js/nav-data.js"></script>
+<script src="../src/js/shell.js" defer></script>
+</head>
+<!-- 章首页：只有标题、提要和一个自动生成的节列表（data-role="section-list"）。
+     正文不用写在这里——每一节都有自己的页面。 -->
+<body data-lesson="" data-chapter="{{ch01}}" data-track="{{practice}}"
+      data-title="{{章标题}}" data-root="../">
+
+<div class="track" id="track" data-scope="library"><div class="in"></div></div>
+
+<div class="mast">
+  <div>{{库名}} / 第 {{01}} 章</div>
+  <div class="r">
+    <button id="theme-btn" type="button" class="mini">主题</button>
+  </div>
+</div>
+
+<div class="lede">
+  <h1>{{章标题}}</h1>
+  <div class="sub">{{这一章要解决什么问题，读完手上会多出什么。两三句话，不要写成目录。}}</div>
+  <div class="bar-row">
+    <span data-role="progress">0 / 0 节完成</span>
+    <div class="bar"><i data-role="progress-bar"></i></div>
+    <span data-role="score-avg">还没有交过卷</span>
+  </div>
+</div>
+
+<div class="seclist" data-role="section-list" data-chapter="{{ch01}}"></div>
+
+<div class="wrap"><div class="main">
+  <div class="sum" style="margin-top:34px">
+    <h3>本章产物</h3>
+    <ul>
+      <li>{{project/train.py：能算损失、能自己调步长}}</li>
+      <li>{{assets/out/loss-20step.txt：20 步损失曲线}}</li>
+    </ul>
+  </div>
+</div></div>
+
+</body>
+</html>

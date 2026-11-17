@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>让参数自己往下走 · 第 3 节：损失突然变大，先看哪三个数</title>
+<link rel="stylesheet" href="../src/css/theme.css">
+<script src="../src/js/nav-data.js"></script>
+<script src="../src/js/shell.js" defer></script>
+</head>
+<body data-lesson="ch01/sec03" data-chapter="ch01" data-track="practice" data-title="第 3 节：损失突然变大，先看哪三个数" data-root="../">
+
+<div class="track" id="track"><div class="in"></div></div>
+
+<div class="mast">
+  <div>手搓深度学习 / 让参数自己往下走 / 第 3 节</div>
+  <div class="r">
+    <button id="notes-btn" type="button" class="mini" aria-expanded="false" aria-controls="side-notes" title="页边批注（快捷键 n）">注 <span id="notes-count">0</span></button>
+    <button id="theme-btn" type="button" class="mini">主题</button>
+    <button id="done-btn" type="button" class="mini" aria-pressed="false">✓ 标记本节完成</button>
+  </div>
+</div>
+
+<div class="poster"><div class="box">
+  <div class="l">
+    <div class="k">SECTION 3 · 实践线 · 35 MIN</div>
+    <h1>损失突然变大，<em>先看</em>哪三个数</h1>
+    <div class="sub">训练跑到一半 loss 变成 nan 或猛地抬起来。给你一张按顺序排查的清单，不要靠猜。</div>
+    <div class="m"><span>产物 <b>assets/out/debug.md</b></span><span>前置 <b>能跑的 train.py</b></span><span>概念 <b>发散</b></span></div>
+  </div>
+</div></div>
+
+<div class="wrap">
+  <div class="main">
+    <div class="lead">
+      <div><div class="h">你现在手上</div><p>一个能跑 20 步的 <code>train.py</code>，和上一节学到的乘数判据。</p></div>
+      <div><div class="h">本节结束时</div><p>一张按顺序检查的清单，写进 <code>assets/out/debug.md</code>；再见到 nan 时不用重跑十次。</p></div>
+    </div>
+
+    <div class="prev"><b>接上一节</b>上一节我们把梯度拆成函数，代码变短了。但代码短不代表训练稳——这一节专门对付"跑着跑着就炸"。</div>
+
+    <div class="step">
+      <div class="sh"><span class="n">STEP 01</span><h2>先想：看到 nan 时你第一反应是改什么</h2></div>
+
+      <div class="think">
+        <div class="t">先别往下看</div>
+        <p>如果不许改代码、只能看一眼数值，你怎么区分"学得太快"和"数据里有坏值"？</p>
+        <details><summary class="a">想好了再看（先自己写一句）</summary><p>看梯度大小：梯度正常但 θ 越跑越大是步长问题；梯度本身就是 nan 或 inf，多半是数据或除零。</p></details>
+      </div>
+
+      <div class="beat">讲</div>
+      <div class="body">
+        <p>按这个顺序看，能排掉八成情况：</p>
+        <div class="rows">
+          <div class="r"><b>① 梯度</b><span>打印 <code>grad(θ)</code>。是 nan/inf → 数据或除零，先修输入。</span></div>
+          <div class="r"><b>② 乘数</b><span>一维时看 |1 − ηk|。大于 1 就一定会震荡放大，先把 η 减半。</span></div>
+          <div class="r"><b>③ 尺度</b><span>θ 的初始值是不是比曲率大一个数量级？大就先缩小初始化。</span></div>
+        </div>
+        <p>这三步都是"看数"，不需要重跑训练：把第一步的中间量打印出来就够了。</p>
+      </div>
+
+      <div class="beat">做</div>
+      <div class="code">
+        <div class="chead"><span class="tag">【修改】</span><span class="file">project/train.py</span><button class="copy" type="button">复制</button></div>
+        <pre><code>def step(theta, lr):
+    g = grad(theta)
+    if g != g or abs(g) == float("inf"):      # nan / inf
+        raise ValueError("梯度坏了：检查输入数据")
+    if abs(1 - lr * 2.0) > 1:                 # 一维乘数判据
+        print("警告：乘数 %.2f > 1，步长偏大" % abs(1 - lr * 2.0))
+    return theta - lr * g</code></pre>
+      </div>
+
+      <div class="beat">看</div>
+      <div class="see">
+        <div class="k">你应该看到</div>
+        <pre>警告：乘数 1.10 > 1，步长偏大
+1 -0.100000
+2 0.090000
+3 -0.081000</pre>
+        <p>有了警告就看得见问题；符号在正负之间跳，幅度 0.1→0.09→0.081 在缩，说明还没发散但要盯住。</p>
+      </div>
+
+      <div class="concept">
+        <div class="cap"><span>概念 01</span><span>divergence</span></div>
+        <div class="in">
+          <h3>发散<span>每一步都变大</span></h3>
+          <p>发散指误差在迭代中越来越大。一维判据是乘数绝对值大于 1；多维时是最大特征值与步长的乘积大于 2。它和"收敛慢"是两件事：慢还是往谷底走，发散是往谷外走。</p>
+          <div class="why">为什么不用"损失变大"当判据：损失曲线是整条历史，等它抬起来时已经跑偏好几步了。乘数可以事前算。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz">
+      <h3>练习：先自己答</h3>
+      <p class="note">客观题自动判分；自评题按自己的判断记录，不计分。</p>
+
+      <div class="q" data-qid="q1" data-type="choice" data-points="60" data-answer="c" data-why="梯度本身是 nan 时，改步长只是把坏数乘得更小">
+        <p>1. 训练第 30 步 loss 变成 nan，梯度打印出来也是 nan。最该先做什么？</p>
+        <label><input type="radio" name="q1" value="a">A. 把学习率减半再跑</label>
+        <label><input type="radio" name="q1" value="b">B. 换一个优化器</label>
+        <label><input type="radio" name="q1" value="c">C. 检查输入数据里有没有 0 或 inf</label>
+      </div>
+
+      <div class="q" data-qid="q2" data-type="self" data-points="0">
+        <p>2. 自评：合上页面，你能按顺序说出排查发散的三步吗？</p>
+        <div class="self-scale">
+          <button type="button" data-score="0">完全说不出</button>
+          <button type="button" data-score="1">有个模糊印象</button>
+          <button type="button" data-score="2">能讲清</button>
+          <button type="button" data-score="3">能举例推到别的函数</button>
+        </div>
+      </div>
+
+      <button id="grade" data-act="grade" type="button">交卷并判分</button>
+      <p class="result" data-role="quiz-result">还没有交卷。</p>
+    </div>
+
+    <div class="sum">
+      <h3>本节小结</h3>
+      <ul><li>先看梯度是否已经是 nan/inf，再乘数判据，最后看初始尺度。</li><li>发散有判据（乘数 > 1），不用等损失抬起来才发现。</li></ul>
+      <div class="next">下一章：让每个方向走不同的步长——从乘数判据推到按方向缩放。</div>
+    </div>
+
+    <div class="sources">
+      <h3>来源与时效</h3>
+      <ol><li>PyTorch Docs. NaN loss — troubleshooting checklist, 2024.</li></ol>
+      <div class="stamp">核对时间：2026-11</div>
+    </div>
+  </div>
+
+  <div class="side" id="side-notes">
+    <aside class="marg">
+      <div class="n"><b>先看数，不重跑</b>打印一次中间量胜过盲改十次超参。</div><div class="n"><b>nan 与 inf 的区别</b>nan 多半来自 0/0 或 log(0)，inf 来自溢出。</div>
+    </aside>
+  </div>
+</div>
+
+<div class="pager" id="pager"></div>
+
+</body>
+</html>

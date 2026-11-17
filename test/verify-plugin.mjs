@@ -7,7 +7,7 @@
  * 退出码 0 = 全部通过。
  */
 
-import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, cpSync, rmSync, copyFileSync, openSync, closeSync } from 'node:fs';
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, cpSync, rmSync, copyFileSync, openSync, closeSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -40,6 +40,10 @@ for (const file of [
   join(SKILL_DIR, 'scripts', 'run-course.mjs'),
   join(HERE, 'check-fixture.mjs'),
   join(HERE, 'run-sample.mjs'),
+  join(SKILL_DIR, 'scripts', 'html-lint.mjs'),
+  join(SKILL_DIR, 'scripts', 'html-nav.mjs'),
+  join(SKILL_DIR, 'templates', 'html', 'src', 'js', 'demo.js'),
+  join(SKILL_DIR, 'templates', 'html', 'src', 'js', 'shell.js'),
   join(SKILL_DIR, 'templates', 'web', 'serve.mjs'),
   join(SKILL_DIR, 'templates', 'callout-to-blockquote.mjs'),
   join(SKILL_DIR, 'templates', 'fix-math-delims.mjs'),
@@ -430,6 +434,106 @@ function runCheckerOn(lib) {
     ok('【提供】缺目录时不再把「答案区多出」当成唯一理由',
       r.out.includes('答案区多出'), r.out.slice(0, 1600));
   } finally { rmSync(lib, { recursive: true, force: true }); }
+}
+
+/* ------------------------------------- 7. HTML 学习库线（v3.0.0 阶段一） */
+
+section('7. HTML 学习库线：契约、模板、机检与导航');
+
+const HTML_DIR = join(SKILL_DIR, 'templates', 'html');
+const HTML_FIXTURE = join(HERE, 'fixtures', 'html-mini');
+
+for (const rel of [
+  join('references', 'html-line.md'),
+  join('templates', 'html', 'section.html'),
+  join('templates', 'html', 'chapter.html'),
+  join('templates', 'html', 'index.html'),
+  join('templates', 'html', 'manifest.example.json'),
+  join('templates', 'html', 'src', 'css', 'theme.css'),
+  join('templates', 'html', 'src', 'css', 'theme-course.css'),
+  join('templates', 'html', 'src', 'js', 'demo.js'),
+  join('templates', 'html', 'src', 'js', 'shell.js'),
+  join('scripts', 'html-lint.mjs'),
+  join('scripts', 'html-nav.mjs')
+]) ok(`存在 ${rel}`, existsSync(join(SKILL_DIR, rel)));
+
+const secTpl = readFileSync(join(HTML_DIR, 'section.html'), 'utf8');
+for (const token of ['data-lesson', 'data-chapter', 'data-track', 'data-title',
+  'theme.css', 'shell.js', 'demo.js', 'nav-data.js', 'id="track"', 'id="pager"', 'id="side-notes"']) {
+  ok(`节模板含宿主协议 ${token}`, secTpl.includes(token));
+}
+const shellJs = readFileSync(join(HTML_DIR, 'src', 'js', 'shell.js'), 'utf8');
+ok('外壳派发 study-progress 事件', shellJs.includes('study-progress'));
+ok('外壳按 nav-data 生成轨道与翻页', shellJs.includes('STUDY_NAV') && shellJs.includes('pg-prev') && shellJs.includes('pg-next'));
+const demoJs = readFileSync(join(HTML_DIR, 'src', 'js', 'demo.js'), 'utf8');
+ok('演示引擎暴露 StudyDemo.register', demoJs.includes('StudyDemo') && /register\s*[:(]/u.test(demoJs));
+ok('演示引擎写 hash 定位', demoJs.includes('location.hash') || demoJs.includes('replaceState'));
+ok('节模板的 demo.js 是同步加载（页面末尾内联脚本要用 StudyDemo）',
+  /<script src="\.\.\/src\/js\/demo\.js"><\/script>/u.test(secTpl) && !/demo\.js" defer/u.test(secTpl));
+
+/* 夹具：一个 1 章 3 节的最小 HTML 库，必须过机检。 */
+ok('夹具 html-mini 存在', existsSync(join(HTML_FIXTURE, 'manifest.json')));
+{
+  const outFile = join(tmpdir(), 'dsh-html-lint-' + process.pid + '.txt');
+  const fd = openSync(outFile, 'w');
+  let status;
+  try {
+    status = spawnSync(process.execPath, [join(SKILL_DIR, 'scripts', 'html-lint.mjs'), HTML_FIXTURE],
+      { stdio: ['ignore', fd, fd] }).status;
+  } finally { closeSync(fd); }
+  const out = readFileSync(outFile, 'utf8');
+  try { rmSync(outFile, { force: true }); } catch (e) { void e; }
+  ok('夹具 html-mini 机检 0 error 0 warning',
+    status === 0 && out.includes('ERRORS=0') && out.includes('WARNINGS=0') && out.includes('PASS'),
+    out.slice(0, 1200));
+  ok('机检统计出 5 页 1 章 3 节', out.includes('pages=5') && out.includes('sections=3'), out.split('\n').find((x) => x.startsWith('SUMMARY')));
+}
+
+/* 导航：manifest → nav-data.js（file:// 不能 fetch，只能 script） */
+{
+  const box = mkdtempSync(join(tmpdir(), 'dsh-html-nav-'));
+  try {
+    cpSync(HTML_FIXTURE, box, { recursive: true });
+    rmSync(join(box, 'src', 'js', 'nav-data.js'), { force: true });
+    const outFile = join(box, '.nav.out');
+    const fd = openSync(outFile, 'w');
+    let status;
+    try {
+      status = spawnSync(process.execPath, [join(SKILL_DIR, 'scripts', 'html-nav.mjs'), box],
+        { stdio: ['ignore', fd, fd] }).status;
+    } finally { closeSync(fd); }
+    const nav = readFileSync(join(box, 'src', 'js', 'nav-data.js'), 'utf8');
+    ok('html-nav 退出码 0', status === 0, readFileSync(outFile, 'utf8').slice(0, 600));
+    ok('nav-data.js 暴露 window.STUDY_NAV', /window\.STUDY_NAV\s*=/u.test(nav));
+    const navObj = {};
+    new Function('window', nav)(navObj);
+    const N = navObj.STUDY_NAV;
+    ok('nav 有 1 章 3 节', N && N.chapters.length === 1 && N.chapters[0].sections.length === 3);
+    ok('nav 每节带 file 与 lesson', N && N.chapters[0].sections.every((x) => /^ch\d+\/sec\d+\.html$/u.test(x.file) && /^ch\d+\/sec\d+$/u.test(x.lesson)));
+    ok('nav 带轨道标题', N && typeof N.track === 'string' && N.track.length > 0);
+  } finally { rmSync(box, { recursive: true, force: true }); }
+}
+
+/* 机检必须能抓住典型错误：临时改坏一份夹具，确认 HTML05/HTML06 报错。 */
+{
+  const box = mkdtempSync(join(tmpdir(), 'dsh-html-bad-'));
+  try {
+    cpSync(HTML_FIXTURE, box, { recursive: true });
+    const sec1 = join(box, 'ch01', 'sec01.html');
+    const raw = readFileSync(sec1, 'utf8');
+    writeFileSync(sec1, raw
+      .replace('</body>', '<script type="module">import x from "./x.js";</script>\n<img src="D:\\projects\\某图.png" alt="x">\n</body>'), 'utf8');
+    const outFile = join(box, '.lint.out');
+    const fd = openSync(outFile, 'w');
+    let status;
+    try {
+      status = spawnSync(process.execPath, [join(SKILL_DIR, 'scripts', 'html-lint.mjs'), box],
+        { stdio: ['ignore', fd, fd] }).status;
+    } finally { closeSync(fd); }
+    const out = readFileSync(outFile, 'utf8');
+    ok('注入 type=module → HTML06 报错', status === 1 && out.includes('HTML06'), out.slice(0, 1200));
+    ok('注入本机绝对路径 → HTML05 报错', out.includes('HTML05'), out.slice(0, 1200));
+  } finally { rmSync(box, { recursive: true, force: true }); }
 }
 
 console.log(`\nSUMMARY CHECKS=${checks} FAILURES=${failures}`);

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>让参数自己往下走 · 第 2 节：把梯度写成能跑的一行</title>
+<link rel="stylesheet" href="../src/css/theme.css">
+<script src="../src/js/nav-data.js"></script>
+<script src="../src/js/shell.js" defer></script>
+</head>
+<body data-lesson="ch01/sec02" data-chapter="ch01" data-track="practice" data-title="第 2 节：把梯度写成能跑的一行" data-root="../">
+
+<div class="track" id="track"><div class="in"></div></div>
+
+<div class="mast">
+  <div>手搓深度学习 / 让参数自己往下走 / 第 2 节</div>
+  <div class="r">
+    <button id="notes-btn" type="button" class="mini" aria-expanded="false" aria-controls="side-notes" title="页边批注（快捷键 n）">注 <span id="notes-count">0</span></button>
+    <button id="theme-btn" type="button" class="mini">主题</button>
+    <button id="done-btn" type="button" class="mini" aria-pressed="false">✓ 标记本节完成</button>
+  </div>
+</div>
+
+<div class="poster"><div class="box">
+  <div class="l">
+    <div class="k">SECTION 2 · 实践线 · 40 MIN</div>
+    <h1>把梯度写成<em>能跑</em>的一行</h1>
+    <div class="sub">把上一节纸上算的 θ ← θ − η·2θ 真的写成 Python，跑出 20 步，再把输出存进文件。</div>
+    <div class="m"><span>产物 <b>project/train.py</b></span><span>前置 <b>上一节的乘数</b></span><span>概念 <b>梯度</b></span></div>
+  </div>
+</div></div>
+
+<div class="wrap">
+  <div class="main">
+    <div class="lead">
+      <div><div class="h">你现在手上</div><p>一张纸上的更新式 <code>θ ← θ − η·2θ</code>，和上一节算出来的 8 个数。</p></div>
+      <div><div class="h">本节结束时</div><p>一个能从头跑到尾的 <code>train.py</code>：打印每一步的 θ，并把结果写进 <code>assets/out/loss-20step.txt</code>。</p></div>
+    </div>
+
+    <div class="prev"><b>接上一节</b>上一节我们只关心乘数 |1 − 2η|，用它判断σ会不会震荡。这一节把这个乘法换成一个真函数。</div>
+
+    <div class="step">
+      <div class="sh"><span class="n">STEP 01</span><h2>先想：为什么要把梯度单独写成一个函数</h2></div>
+
+      <div class="think">
+        <div class="t">先别往下看</div>
+        <p>如果直接把 <code>theta = theta - lr * 2 * theta</code> 写在循环里，你能在三周后改得动它吗？</p>
+        <details><summary class="a">想好了再看（先自己写一句）</summary><p>梯度单独成函数，换损失函数时只改一处；循环里只留下"走一步"这件事。</p></details>
+      </div>
+
+      <div class="beat">讲</div>
+      <div class="body">
+        <p>把梯度写成函数 <code>grad(theta)</code>，损失写成函数 <code>loss(theta)</code>，更新式就是 <code>theta - lr * grad(theta)</code>。这样下一节换损失函数，只动前两个函数。</p>
+        <div class="formula">θ ← θ − η · grad(θ)</div>
+        <p>注意 grad 返回的是"往哪边下坡、下坡有多陡"，不负责迈出去多远——步长是 η 的事。分开之后，调学习率和换损失互不干扰。</p>
+      </div>
+
+      <div class="beat">做</div>
+      <div class="code">
+        <div class="chead"><span class="tag">【新建】</span><span class="file">project/train.py</span><button class="copy" type="button">复制</button></div>
+        <pre><code>def loss(theta):
+    return theta ** 2
+
+
+def grad(theta):
+    return 2.0 * theta
+
+
+def step(theta, lr):
+    return theta - lr * grad(theta)
+
+
+if __name__ == "__main__":
+    theta, lr = 1.0, 0.1
+    for i in range(20):
+        theta = step(theta, lr)
+        print(i + 1, round(theta, 6))</code></pre>
+      </div>
+
+      <div class="beat">看</div>
+      <div class="see">
+        <div class="k">你应该看到</div>
+        <pre>1 0.8
+2 0.64
+3 0.512
+4 0.4096
+5 0.32768
+…
+20 0.011529</pre>
+        <p>20 步之后 θ 只剩 0.0115——离谷底 0 还有一段。把 η 降到 0.05，收敛会慢一半，但更稳。</p>
+      </div>
+
+      <div class="concept">
+        <div class="cap"><span>概念 01</span><span>gradient</span></div>
+        <div class="in">
+          <h3>梯度<span>grad(θ) · 最陡上升方向</span></h3>
+          <p>梯度指向函数上升最快的方向，所以更新时取负号就是下坡。一维时它就是一个数（斜率），多维时是一个向量：每个分量说那个方向有多陡。</p>
+          <div class="why">为什么值得单独成函数：梯度是"哪边低"的信息，步长是"走多远"的决定。混在一行里，两个概念就绑死了。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz">
+      <h3>练习：先自己答</h3>
+      <p class="note">客观题自动判分；自评题按自己的判断记录，不计分。</p>
+
+      <div class="q" data-qid="q1" data-type="choice" data-points="60" data-answer="b" data-why="d(θ⁴)/dθ = 4θ³，别把指数搬到前面就忘了降一次">
+        <p>1. 把 <code>loss</code> 换成 <code>theta ** 4</code>，梯度应该写成什么？</p>
+        <label><input type="radio" name="q1" value="a">A. 4 * theta</label>
+        <label><input type="radio" name="q1" value="b">B. 4 * theta ** 3</label>
+        <label><input type="radio" name="q1" value="c">C. theta ** 3</label>
+      </div>
+
+      <div class="q" data-qid="q2" data-type="self" data-points="0">
+        <p>2. 自评：合上页面，你能说出"梯度"和"步长"各管什么吗？</p>
+        <div class="self-scale">
+          <button type="button" data-score="0">完全说不出</button>
+          <button type="button" data-score="1">有个模糊印象</button>
+          <button type="button" data-score="2">能讲清</button>
+          <button type="button" data-score="3">能举例推到别的函数</button>
+        </div>
+      </div>
+
+      <button id="grade" data-act="grade" type="button">交卷并判分</button>
+      <p class="result" data-role="quiz-result">还没有交卷。</p>
+    </div>
+
+    <div class="sum">
+      <h3>本节小结</h3>
+      <ul><li>梯度负责方向，步长负责距离，分成两个函数后各自可替换。</li><li>一维时梯度就是斜率，写成函数比写在循环里好改。</li></ul>
+      <div class="next">留给下一节：把步长固定成 0.1 一定安全吗？换个曲率更大的损失再看看。</div>
+    </div>
+
+    <div class="sources">
+      <h3>来源与时效</h3>
+      <ol><li>Goodfellow, I. et al. Deep Learning, Ch.4. MIT Press, 2016.</li></ol>
+      <div class="stamp">核对时间：2026-11</div>
+    </div>
+  </div>
+
+  <div class="side" id="side-notes">
+    <aside class="marg">
+      <div class="n"><b>梯度与导数</b>一维时梯度就是导数；多维时是偏导组成的向量。</div><div class="n"><b>为什么不合并</b>合并之后换损失函数要动循环，容易改错一处跑通另一处。</div>
+    </aside>
+  </div>
+</div>
+
+<div class="pager" id="pager"></div>
+
+</body>
+</html>

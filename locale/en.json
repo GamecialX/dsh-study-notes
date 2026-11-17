@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Study notes (learning library)",
-    "description": "Turns a subject into a chaptered study-notes library: portable standard Markdown notes plus a local web learning portal with exercises and gradable chapter tests."
+    "description": "Turns a subject into a chaptered study library: portable standard Markdown notes plus a local web portal, or a pure-static HTML course library (one page per section, figures, draggable demos, double-click to open), with exercises and gradable chapter tests."
   }
 }

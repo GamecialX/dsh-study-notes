@@ -1,6 +1,6 @@
 ---
 name: study-notes
-description: "Use when someone wants to learn a subject from zero, or asks for 学习笔记 / 教学文档 / 讲义 / 教程 / 从零学某科目: plan a syllabus, confirm a sample section, then teach 3–5 mini-lessons per section (think → explain → hands-on → read back) that grow the learner's project from empty (theory courses grow a knowledge scroll), concepts explained on first need, exercises, cheat sheets, 100-point tests, Markdown plus a local portal; chapter-by-chapter feedback or continuous mode. Also resumes or extends a library."
+description: "Use when someone wants to learn a subject from zero, or asks for 学习笔记 / 讲义 / 教程 / 从零学某科目: syllabus + sample section, then 3–5 mini-lessons per section (think → explain → hands-on → read back) growing the learner's project from empty (theory: a knowledge scroll), with exercises, cheat sheets, 100-point tests, chapter-by-chapter or continuous; Markdown + local portal, or a static HTML library (one page per section, figures, draggable demos, double-click, offline). Also resumes a library."
 ---
 
 # 学习笔记生成（study-notes）
@@ -36,6 +36,8 @@ description: "Use when someone wants to learn a subject from zero, or asks for �
 
 **先选线，再动笔**：要「从一个空目录造出能跑的东西」的走**实践线**（下面 R1–R13、T1–T5）；要「推导、论证、辨析、复述」的走**理论线**（`references/theory-line.md` 的 L1–L8，产物是一份能自己复述的知识卷轴）。一节里混两条线会两头不讨好；混合课按章分配，在大纲章表里标 `类型：理论 / 实践`。
 
+**再选载体**（P0 里问）：默认 `Markdown + 本地门户`；用户明确要更好看、要插图、要动画/可拖演示，走 **HTML 线**（第八节、`references/html-line.md`）。载体与课程线正交：实践课、理论课都能出 HTML。**选 HTML 就只产 HTML**（外加图片视频等资源），不再写一套同内容的 MD；但大纲与工作记录（`00 大纲.md`、`checklist.md`）仍用 Markdown，它们是给人看的台账。
+
 ---
 
 ## 二、资产地图：不要从零写这些文件
@@ -64,6 +66,9 @@ description: "Use when someone wants to learn a subject from zero, or asks for �
 | 启动脚本 | `templates/启动学习服务器.bat`、`templates/start_server.sh` | **用 shell 复制并保持原字节** |
 | 自动校验 | `scripts/check-library.mjs` | 样章用 `--only`，交付前全库跑；新库一律加 `--strict`；修完所有 error 才算完成 |
 | 照做重放 + 真实运行 | `scripts/run-course.mjs` | 从空目录照正文做一遍，执行每条【运行】；`--write` 生成 `code/out/`、正文输出块和 `code/answer/chNN/` |
+| **HTML 线的全部契约**（目录树、manifest、宿主协议、主题变量、演示契约、L0/L1 规则、建库四问） | `references/html-line.md` | 决定走 HTML 线后**第一份必读**，照它建库 |
+| HTML 线的骨架：节页 / 章首页 / 库首页 / 主题 / 外壳 / 演示引擎 | `templates/html/`（`section.html`、`chapter.html`、`index.html`、`manifest.example.json`、`src/css/theme.css`、`src/js/{shell,demo}.js`） | `theme.css`、`shell.js`、`demo.js` **逐字节复制**，不要手写、不要改结构；节页照模板填占位符 |
+| HTML 库机检与导航 | `scripts/html-lint.mjs`、`scripts/html-nav.mjs` | `html-lint` 每次交付前跑；`html-nav` 把 `manifest.json` 编译成 `src/js/nav-data.js`（file:// 不能 fetch，导航只能走 script） |
 
 复制大文件用 shell（Windows 用 `Copy-Item -LiteralPath`，macOS/Linux 用 `cp`）。`index.html`、`serve.mjs` 和两个启动脚本**必须逐字节复制**：`.bat` 依赖 CRLF 行尾与 UTF-8 代码页，手抄必然出错。
 
@@ -164,7 +169,8 @@ references 里的示例大多取自代码类 / 计算机类 / AI 类课程，只
 4. **笔记根目录**的绝对路径（只在对话里用，不写进笔记正文）。
 5. **课程类型**：先按科目猜一个（实践线 / 理论线 / 混合）并说出理由，请用户确认或改。这决定用哪份节骨架模板、产物是什么、校验看哪几条。
 6. **节奏**：逐章停（每章交付后等用户反馈，改完再写下一章）还是连续推进（认可第一章风格后一口气写完）。**默认推荐逐章停**——第一章写歪了，后面全是白工。
-7. **输出载体**：目前只有「Typora 友好的 Markdown + 本地网页门户」。用户若提到想要 HTML 讲义、PDF、线上站点，如实说明这一版还没有，问清他是否接受 Markdown；不要自行改载体。
+7. **输出载体**：默认「Typora 友好的 Markdown + 本地网页门户」，也支持「HTML 学习库」（`references/html-line.md`：一节一页、能插图、能放可拖演示、双击即看）。两种二选一，选了就只产一种。用户提 PDF / 线上站点时如实说这两样没有。
+8. **设计需求**（仅 HTML 线问）：① 用默认主题 ② 描述气质/配色/参考站，我生成课程专属覆盖层 `theme-course.css`（只改 CSS 变量）③ 用户给参考图或设计稿。补一句「建库当下没想法也正常，先用默认，建完随时能换」。
 
 ### P1 · 大纲
 
@@ -188,9 +194,10 @@ references 里的示例大多取自代码类 / 计算机类 / AI 类课程，只
 ### P2 · 工作记录 + 门户骨架
 
 1. 从 `templates/checklist.md` 生成 `<根>/checklist.md`。
-2. 复制 `templates/web/index.html`、`templates/web/serve.mjs` 与整个 `templates/web/vendor/` 到 `<根>/web/`，复制两个启动脚本到 `<根>/`，生成只含目录的 `<根>/web/notes_data.js`。
+2. **Markdown 线**：复制 `templates/web/index.html`、`templates/web/serve.mjs` 与整个 `templates/web/vendor/` 到 `<根>/web/`，复制两个启动脚本到 `<根>/`，生成只含目录的 `<根>/web/notes_data.js`。
+3. **HTML 线**：按 `references/html-line.md` 的目录树建骨架——`index.html`、`manifest.json`、`chNN/index.html`、`chNN/secNN.html` 从 `templates/html/` 起手，`src/css/`、`src/js/` 整目录复制，然后 `node <skill>/scripts/html-nav.mjs "<根>"` 生成 `src/js/nav-data.js`。
 
-**判据**：双击启动脚本能打开门户并看到各章卡片。
+**判据**：Markdown 线双击启动脚本能打开门户并看到各章卡片；HTML 线双击 `index.html`（file://）能看到各章卡片、点进章再点进节，轨道与上下节翻页都能走。
 
 ### P2.5 · 样章确认（**必须停下来问用户**；逐章停模式并入第一章交付）
 
@@ -250,6 +257,7 @@ references 里的示例大多取自代码类 / 计算机类 / AI 类课程，只
 4. 回填 `00 大纲.md`，`checklist.md` 规划表全部 ✅。
 5. 短暂启动服务器，确认门户能开、能读、能判分、速查能打开，然后停掉。
 6. 至少挑两三篇笔记在 Typora 里实际打开（或请用户打开），确认公式成块显示、标注块标签可见、链接能点开。
+6b. **HTML 线加两道**：`node <skill>/scripts/html-lint.mjs "<根>"` 必须 0 error（warning 逐条判断）；双击用浏览器实开三页（库首页 / 章首页 / 一节），确认演示能播能拖、练习能判分、刷新后进度还在、控制台无报错。
 7. **理论线加两道人工关**（实践线可跳过）：随机抽一章做合书复述——不看笔记口述概念地图，对照该章 `### 本章项目地图` 查漏；逐章检查 `### 来源与时效` 覆盖了本章所有四类硬事实没有、有没有编造或已经过期的断言。
 8. 向用户报告：章/节/概念/题目数量、校验结果、顺读测试结果、已知局限、如何打开学习。
 
@@ -283,6 +291,9 @@ node <skill>/scripts/check-library.mjs "<根>"                                # 
 node <skill>/scripts/check-library.mjs "<根>" --replay-to "<空目录>"          # 写出每次【运行】时的 project/ 快照
 node <skill>/scripts/run-course.mjs "<根>"                                   # 在快照里真实运行并比对输出
 node <skill>/scripts/run-course.mjs "<根>" --write                           # 生成 code/out/、正文输出块、code/answer/chNN/
+node <skill>/scripts/html-nav.mjs "<根>"                                     # HTML 线：manifest → src/js/nav-data.js
+node <skill>/scripts/html-lint.mjs "<根>"                                    # HTML 线：形状机检（L0）
+node <skill>/scripts/html-lint.mjs "<根>" --strict                           # HTML 线：warning 也当 error（HTML14 除外）
 ```
 
 `check-library.mjs` 检查：命名、frontmatter、链接与图片（文件、锚点、空链接、越界）、Obsidian 专有语法与旧式标注、块级公式定界符、练习 3–5 题、篇幅与标注块预算、旧式概念编号残留、代码/输出绑定、速查与跨章回顾、`notes_data.js` 与文件和题目的一致性、测试分值、残留占位符，以及课程线规则 [R1]–[R13]：节内顺序与每步三要素、承接与钩子、概念写法、代码块标签与照做重放、答案区同构、未来版本泄漏、`code/` 里动手、章末通跑与项目地图、notebook、学时、本机绝对路径、`\mathbb`（Typora 1.14 渲染不了）；另外以 warning 报讲解线规则 [T1]–[T5]（每步先讲后做、概念长度、先想一下、回看、讲解与代码比例）。理论线的 L1–L8 **不在脚本里检查**（理论课没有代码与输出可绑定），交付前按 `references/quality-gates.md` 人工过。
@@ -297,7 +308,101 @@ node <skill>/scripts/run-course.mjs "<根>" --write                           # 
 
 ---
 
-## 八、不要做
+## 八、HTML 学习库线（v3.0）
+
+用户选了 HTML 载体时读本节，细则与规则编号全在 `references/html-line.md`。一句话：**同样的课，换一种装帧**——一节一页、能插图、能放可拖演示、双击就开，不需要构建、不需要联网。
+
+### 8.1 产物与开工顺序
+
+```text
+<根>/
+├─ index.html            库首页：章卡片、总进度、平均分
+├─ manifest.json         唯一事实源：章节标题、文件名、节顺序
+├─ chNN/index.html       章首页：本节清单 + 本章产物
+├─ chNN/secNN.html       节页（一节一页；只有"跨节共享状态"才整章单页）
+├─ src/css/theme.css     主题（逐字节复制 templates/html/src/css/theme.css）
+├─ src/css/theme-course.css  课程覆盖层（可选，只许改变量/点缀/插槽）
+├─ src/js/nav-data.js    html-nav.mjs 生成，别手写
+├─ src/js/shell.js       外壳（轨道、翻页、主题、完成标记、批注、判分）
+├─ src/js/demo.js        演示引擎（StudyDemo.register）
+├─ src/image/ src/media/ 图片、视频、F3 帧序列（都是外链文件，不进页面）
+├─ assets/               代码产物、notebook、数据
+├─ CREDITS.md            图片/素材来源与许可
+└─ 00 大纲.md  checklist.md   台账仍用 Markdown
+```
+
+顺序：`manifest.json` → 各节 `secNN.html` → 章首页 / 库首页 → `html-nav` → `html-lint` → 浏览器实开。
+
+### 8.2 六条宿主协议（外壳靠它们工作）
+
+1. `<body data-lesson="ch01/sec01" data-chapter="ch01" data-root="../" data-track="practice" data-title="第 3 节：…">`
+2. 页头依次引 `theme.css`、`nav-data.js`、`demo.js`（**同步，不能加 defer**）、`shell.js`（defer）
+3. 外壳生成轨道 `#track` 与翻页 `#pager`：页面里只放这两个空容器，不要手写节点
+4. 进度与分数只进 `localStorage`：`study:progress:<lesson>`、`study:scores:<lesson>`；每次保存派发 `study-progress` 事件
+5. 所有资源用**相对路径**，不许 `http(s)://`、不许 CDN、不许本机绝对路径
+6. 不许 `type="module"`、`import`、`fetch()` 读本地文件、`new Worker`——file:// 下都会被拦
+
+> <b>*Important*</b>
+> `demo.js` 必须**同步**加载：节页末尾的内联脚本在解析期就要调 `StudyDemo.register`，加 defer 会让 `window.StudyDemo` 还是 undefined，演示静默失效（这是 v3.0 开发时踩过的坑）。
+
+### 8.3 交互配比：文章为主，组件是插入件
+
+HTML 线不是"把课做成小程序"。判据只有一条：**读的时间明显多于点的时间**。
+
+- 组件不承担讲解：删掉所有交互，正文仍要能读通（正文自足）。
+- 三项准入：不试不会信（反直觉）／懂了也做不对（手算、填空）／文字绕不清（对照、图）。三项都不占，就别放组件。
+- 三项禁入：本来就会信／长链推理／只为好看。
+- 每节只问一次"读者不动手就会误解的地方在哪"，找到就在那里放一个组件，别处留给文字。
+- 形态→组件：定义→折叠概念卡；易混→对照表；代码→带【新建】/【修改】标签的代码块；随参数变→滑块重画（F1）；随时间变→可拖演示（F2）；易错点→二选一；要记→填空；要查→标签页；分支→高亮分支图；要算→页内计算器。
+
+不做：不按交互数量打分，不设"至少 N 个组件"的门槛，不做点击热度统计。
+
+### 8.4 可拖演示（F 档）怎么写
+
+档位：**F1** 参数滑块+重画（最轻）；**F2** canvas/SVG + 播放/暂停/步进/时间轴/改参数（主力）；**F3** 预渲染帧序列+拖动条（兜底，帧 > 5 MB 要外置到 `src/media/`）；**F4** 真视频（只点缀，不能真拖）。每章 1–2 个，别节节都有。
+
+写法（模板 `section.html` 里有完整可跑的示例）：
+
+```html
+<div class="demo" data-demo="grad-lr" data-tier="2">
+  <div class="dhd">F2 · 可拖演示 <span data-role="readout"></span></div>
+  <div class="dstage"><canvas width="960" height="620"></canvas>
+    <noscript><img src="../src/image/xxx-static.svg" alt="静帧"></noscript></div>
+  <div class="dside">你应该看到……（三条值得停下的点）</div>
+  <div class="dctrl">
+    <button data-act="play">播放</button><button data-act="back">上一步</button><button data-act="next">下一步</button>
+    <input type="range" data-param="t" min="0" max="1" step="0.001">
+    <input type="range" data-param="lr" min="0.02" max="1.2" step="0.01">
+    <button data-act="reset">重置</button>
+  </div>
+</div>
+<script>
+  StudyDemo.register("grad-lr", {
+    tier: 2, steps: 20, state: { t: 0, lr: 0.35 }, readout: (s) => "η = " + s.lr.toFixed(2),
+    frame: (s, { ctx, canvas, palette }) => { /* 只依赖 s 绘制一帧，别读"上一次画了什么" */ }
+  });
+</script>
+```
+
+三条教学硬要求：① 标题一句话说清"演示的是什么"（不是"动画演示"）；② `你应该看到` 与动手步骤成对；③ 至少三个"值得停下的点"（起点／转折／终点），正文写"把滑块拖到 0.9 再看"。
+
+### 8.5 校验
+
+- `node <skill>/scripts/html-lint.mjs "<根>"`：HTML01–07（manifest 合法、manifest↔磁盘一致、相对链接存在、无外链、无本机绝对路径、无 module/fetch/Worker、`data-lesson` 对得上）**必须 0 error**；HTML11–14（h1/#pager/#track、概念编号唯一、正文体量、组件存在）是 warning，逐条判断。
+- 浏览器实开：库首页 → 章 → 节，轨道高亮对、上下节能走、演示能播能拖、交卷有分、刷新进度在。
+- 体积软线：单页 > 800 KB 改用"拆数据文件 + 本地服务器"；内联 SVG > 6 张移到 `src/image/`。
+
+### 8.6 HTML 线的"不要做"
+
+- 不要手写 `theme.css` / `shell.js` / `demo.js`，也不要改它们的类名与 data 属性——模板是契约。
+- 不要为了"每门课不一样"重写骨架；课程差异只走 `theme-course.css` 的变量与插槽。
+- 不要写 `type="module"`、不要从 CDN 引字体或库、不要 fetch 本地 json。
+- 不要产出同一套内容的 MD + HTML 两份（双份必然漂移）。
+- 不要把演示做成"自动播放的动画片"：没有可停、可拖、可改参数，就不是 F 档演示。
+
+---
+
+## 九、不要做
 
 - 不要用聊天回答代替这座库。用户要的是文件。
 - 不要跳过 P0 和 P2.5 的确认就生成整库。

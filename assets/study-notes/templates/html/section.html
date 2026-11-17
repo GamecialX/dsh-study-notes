@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{章标题}} · {{节标题}}</title>
+<link rel="stylesheet" href="../src/css/theme.css">
+<!-- 本课有自己的覆盖层时才加这一行（默认没有）：<link rel="stylesheet" href="../src/css/theme-course.css"> -->
+<script src="../src/js/nav-data.js"></script>
+<script src="../src/js/demo.js"></script>
+<script src="../src/js/shell.js" defer></script>
+</head>
+<!-- 复制本文件改内容时，只需要改三处：① 上面的 title ② body 的 data-* ③ <div class="wrap"> 里的正文。
+     下面每一类组件都是完整可用的真实写法，用不到就整块删掉（删掉后正文仍要读得通——这是硬要求）。 -->
+<body data-lesson="{{ch01/sec01}}" data-chapter="{{ch01}}" data-track="{{practice}}"
+      data-title="{{第 1 节：损失曲面长什么样}}" data-root="../">
+
+<div class="track" id="track"><div class="in"></div></div>
+
+<div class="mast">
+  <div>{{第 2 章 · 让参数自己往下走}} / {{第 1 节}}</div>
+  <div class="r">
+    <button id="notes-btn" type="button" class="mini" aria-expanded="false" aria-controls="side-notes" title="页边批注（快捷键 n）">注 <span id="notes-count">0</span></button>
+    <button id="theme-btn" type="button" class="mini">主题</button>
+    <button id="done-btn" type="button" class="mini" aria-pressed="false">✓ 标记本节完成</button>
+  </div>
+</div>
+
+<!-- 头版海报：SECTION 编号 + 一句话钩子 + 产物/前置/概念 + 一张自绘 SVG 版画。
+     没有插画就不放 .r 那一栏（.box 会自动变成单栏），不要用外链图片。 -->
+<div class="poster"><div class="box">
+  <div class="l">
+    <div class="k">SECTION {{01}} · {{实践线}} · {{45}} MIN</div>
+    <h1>{{步长取多大才}}<em>{{不会}}</em>{{来回震荡}}</h1>
+    <div class="sub">{{山谷是开口向上的抛物线。为什么步子一大，反而跑到对面坡上去，甚至越跑越远？}}</div>
+    <div class="m"><span>产物 <b>{{project/train.py}}</b></span><span>前置 <b>{{上一节的 20 步损失曲线}}</b></span><span>概念 <b>{{学习率}}</b></span></div>
+  </div>
+  <div class="r">
+    <svg viewBox="0 0 400 250" role="img" aria-label="{{版画插画：抛物线山谷与两条轨迹}}">
+      <path d="M30 46 Q200 252 370 46" fill="none" stroke="#f3ece0" stroke-width="2.2"/>
+      <text x="232" y="70" font-family="Georgia,serif" font-style="italic" font-size="12" fill="#f3ece0">L(θ)=θ²</text>
+    </svg>
+  </div>
+</div></div>
+
+<div class="wrap">
+  <div class="main">
+
+    <!-- 导读：你现在手上 / 本节结束时 -->
+    <div class="lead">
+      <div><div class="h">你现在手上</div><p>{{一个能算损失的 train.py，以及上一节跑出来的 20 步损失曲线——它先降后升，最后变成 nan。}}</p></div>
+      <div><div class="h">本节结束时</div><p>{{你能指着一个函数说出"这一步能不能跨过去"，并给 train.py 加一个会自己调小步长的规则。}}</p></div>
+    </div>
+
+    <!-- 接上一节 -->
+    <div class="prev"><b>接上一节</b>{{上一节我们把 loss 当成一座山谷，沿着负梯度一直走到谷底；走到第 14 步时损失曲线开始往上翘。}}</div>
+
+    <!-- 一个步骤：.sh 标题条 + .think 先想 + .beat 四拍（想/讲/做/看） -->
+    <div class="step">
+      <div class="sh"><span class="n">STEP {{01}}</span><h2>{{先想：步子大为什么到不了底}}</h2></div>
+
+      <div class="think">
+        <div class="t">先别往下看</div>
+        <p>{{山谷是开口向上的抛物线，你在左边坡上。为什么步子一大，反而会跑到对面坡上去？}}</p>
+        <details><summary class="a">想好了再看（先自己写一句）</summary>
+          <p>{{把每一步写成乘法：θ ← θ·(1 − 2η)。乘数绝对值超过 1，就越乘越大。}}</p>
+        </details>
+      </div>
+
+      <div class="beat">讲</div>
+      <div class="body">
+        <p>{{正文。这段是主体，读者主要靠读，不靠点。}}</p>
+        <div class="formula">{{θ ← θ − η · 2θ = θ · (1 − 2η)}}</div>
+      </div>
+
+      <!-- 表格型对照：每行左边是等宽小标签 -->
+      <div class="rows">
+        <div class="r"><b>{{η = 0.1}}</b><span>{{乘数 0.8，每步缩到八成，稳稳收敛。}}</span></div>
+        <div class="r"><b>{{η = 1.05}}</b><span>{{乘数 −1.1，符号翻转，左右横跳。}}</span></div>
+      </div>
+
+      <div class="beat">做</div>
+      <!-- 代码块：.chead 里的标签用【新建】/【修改】/【重构】/【运行】 -->
+      <div class="code">
+        <div class="chead"><span class="tag">【新建】</span><span class="file">{{project/train.py}}</span><button class="copy" type="button">复制</button></div>
+        <pre><code>{{def step(theta, lr):
+    return theta - lr * 2.0 * theta}}</code></pre>
+      </div>
+
+      <div class="beat">看</div>
+      <div class="see">
+        <div class="k">你应该看到</div>
+        <pre>{{1 0.8
+2 0.64
+3 0.512}}</pre>
+        <p>{{每行都是上一行的 0.8 倍。把 lr 改成 1.05 再跑一次，符号开始翻转。}}</p>
+      </div>
+
+      <!-- 概念卡：.cap 左边写编号（必须连续编号，门户徽标靠它），右边写英文名 -->
+      <div class="concept">
+        <div class="cap"><span>概念 {{01}}</span><span>{{learning rate}}</span></div>
+        <div class="in">
+          <h3>{{学习率}}<span>{{η · 每一步迈多远}}</span></h3>
+          <p>{{定义与解释。40–120 行是舒适区，别写成一句话名词解释。}}</p>
+          <div class="why">{{为什么记这条：少背定义，多记它替你挡掉的错误。}}</div>
+        </div>
+      </div>
+
+      <!-- 可操纵演示（F2）：canvas + 标题条读数 + 你应该看到 + 控制条。
+           画法写在页面末尾的 <script> 里，见文件底部。 -->
+      <div class="demo" data-demo="{{grad-lr}}" data-tier="{{2}}">
+        <div class="dhd"><span>F2 · 可拖演示</span><span class="dout" data-role="readout">第 0 步</span></div>
+        <div class="dstage">
+          <canvas width="960" height="620" aria-label="{{学习率过大时的震荡轨迹}}"></canvas>
+          <noscript><p class="dcap">{{浏览器禁用脚本：这是起始静帧——θ 从 1.0 出发，步长 1.05 时每步跨到对面并变高。}}</p></noscript>
+        </div>
+        <div class="dside">
+          <div class="k">你应该看到</div>
+          <p>{{把步长拖到 0.45 并播放：点一路往下，最后黏在谷底。拖到 1.05：横跳越来越大。}}</p>
+          <ol><li>{{第 1 步，落在谷底哪一侧}}</li><li>{{第 3 步，看幅度有没有在缩}}</li><li>{{第 12 步，看它还在不在谷底附近}}</li></ol>
+        </div>
+        <div class="dctrl">
+          <button class="btn p" data-act="play" type="button">▶ 播放</button>
+          <button class="btn" data-act="back" type="button">◀ 上一步</button>
+          <button class="btn" data-act="next" type="button">下一步 ▶</button>
+          <label>时间 <input type="range" data-param="t" min="0" max="1" step="0.001" value="0"></label>
+          <label>步长 <input type="range" data-param="lr" min="0.05" max="1.15" step="0.01" value="0.35"></label>
+          <label>速度 <select data-param="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label>
+          <button class="btn" data-act="reset" type="button">重置</button>
+          <span class="hint">空格 播放/暂停 · <span class="kbd">←</span><span class="kbd">→</span> 单步</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 练习区：data-points 决定分值；data-answer 是判分依据（别写进正文，读者会看见）。 -->
+    <div class="quiz">
+      <h3>练习：先自己答</h3>
+      <p class="note">客观题自动判分；自评题按自己的判断记录，不计分。</p>
+
+      <div class="q" data-qid="q1" data-type="choice" data-points="40" data-answer="b" data-why="{{乘数是 |1 − 2η|，不是方向错了}}">
+        <p>1. {{对 L = θ²，学习率取 1.05 时，训练会（　）}}</p>
+        <label><input type="radio" name="q1" value="a">{{A. 单调收敛}}</label>
+        <label><input type="radio" name="q1" value="b">{{B. 左右横跳，幅度越来越大}}</label>
+        <label><input type="radio" name="q1" value="c">{{C. 停在原地不动}}</label>
+      </div>
+
+      <div class="q" data-qid="q2" data-type="fill" data-points="30" data-answer="0.4" data-tol="0.02" data-why="{{θ′ = θ(1 − ηk)，k = 2}}">
+        <p>2. {{设 L(θ) = θ²，当前 θ = 1，η = 0.3，走一步之后 θ = }}<input class="fill" type="text" inputmode="decimal" aria-label="填一个数">（填小数）</p>
+      </div>
+
+      <div class="q" data-qid="q3" data-type="self" data-points="0">
+        <p>3. 自评：{{合上页面，你能说出"为什么曲率越大、允许的步长越小"吗？}}</p>
+        <div class="self-scale">
+          <button type="button" data-score="0">完全说不出</button>
+          <button type="button" data-score="1">有个模糊印象</button>
+          <button type="button" data-score="2">能讲清</button>
+          <button type="button" data-score="3">能举例推到别的函数</button>
+        </div>
+      </div>
+
+      <button id="grade" data-act="grade" type="button">交卷并判分</button>
+      <p class="result" data-role="quiz-result">还没有交卷。</p>
+    </div>
+
+    <!-- 小结 + 留给下一节 -->
+    <div class="sum">
+      <h3>本节小结</h3>
+      <ul><li>{{"震荡"的判据是乘数 |1 − ηk| < 1，不是方向错了。}}</li><li>{{安全步长随曲率线性反比：η < 2/k。}}</li></ul>
+      <div class="next">{{留给下一节：既然不同方向曲率不同，能不能让每个方向走不同的步长？}}</div>
+    </div>
+
+    <!-- 概念索引（理论课 / 概念多的课用；删掉不影响） -->
+    <div class="index">
+      <h3>概念索引</h3>
+      <ol><li>{{学习率（learning rate）}}</li></ol>
+    </div>
+
+    <!-- 来源与时效：只有在用到外部数字/时间点/SOTA/机构归属时才需要 -->
+    <div class="sources">
+      <h3>来源与时效</h3>
+      <ol><li>{{作者. 标题. 出处, 年份.}}</li></ol>
+      <div class="stamp">{{核对时间：2026-11}}</div>
+    </div>
+
+  </div><!-- .main -->
+
+  <!-- 页边批注：默认收起，顶栏"注 N"展开。每条 .n 左边小标签 + 正文 + 一句延伸。 -->
+  <div class="side" id="side-notes">
+    <aside class="marg">
+      <div class="n"><b>{{为什么是 0.8}}</b>{{1 − 2 × 0.1。乘数落在 0 与 1 之间，就是"缩水"。}}</div>
+      <div class="n"><b>{{2/k 不是魔法}}</b>{{θ² 的曲率是 2，所以上限是 1；换成 100θ²，上限就是 0.02。}}</div>
+    </aside>
+  </div>
+</div><!-- .wrap -->
+
+<div class="pager" id="pager"></div>
+
+<script>
+/* 演示的画法：引擎只管播放/步进/时间轴/键盘，这里只描述"每一帧怎么画"。
+ * frame(state, env) 必须是纯函数：只读 state，用 env.ctx/env.canvas 画，不累积 DOM。 */
+(function () {
+  if (!window.StudyDemo) return;
+  var N = 40, X0 = 1.0;
+
+  function track(lr) {
+    var arr = [X0], th = X0;
+    for (var i = 0; i < N; i++) { th = th - lr * 2 * th; arr.push(th); }
+    return arr;
+  }
+
+  StudyDemo.register("{{grad-lr}}", {
+    tier: 2,
+    steps: N,
+    state: { t: 0, lr: 0.35, speed: 1 },
+    readout: function (s) {
+      var tr = track(s.lr), i = Math.min(s.__step, N);
+      return "θ = " + tr[i].toFixed(3) + " · η = " + s.lr.toFixed(2) + " · 第 " + i + " 步";
+    },
+    frame: function (s, env) {
+      var ctx = env.ctx, cv = env.canvas, C = env.palette();
+      var w = cv.width, h = cv.height, pad = 46, spanX = 2.4, maxL = 1.5;
+      function px(x) { return pad + ((x + spanX / 2) / spanX) * (w - pad * 2); }
+      function py(L) { return h - pad - Math.min(L, maxL) / maxL * (h - pad * 2); }
+
+      ctx.strokeStyle = C.line; ctx.lineWidth = 1; ctx.globalAlpha = .7;
+      ctx.beginPath(); ctx.moveTo(pad, py(0)); ctx.lineTo(w - pad, py(0)); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px(0), 20); ctx.lineTo(px(0), h - pad); ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      ctx.strokeStyle = C.ink; ctx.lineWidth = 2.4; ctx.beginPath();
+      for (var k = -120; k <= 120; k++) {
+        var x = k / 100, y = py(x * x);
+        if (k === -120) ctx.moveTo(px(x), y); else ctx.lineTo(px(x), y);
+      }
+      ctx.stroke();
+
+      var tr = track(s.lr), cur = Math.min(s.__step, N);
+      ctx.strokeStyle = C.blue; ctx.lineWidth = 2; ctx.beginPath();
+      for (var m = 0; m <= cur; m++) {
+        var yy = py(Math.min(tr[m] * tr[m], maxL));
+        if (m === 0) ctx.moveTo(px(tr[m]), yy); else ctx.lineTo(px(tr[m]), yy);
+      }
+      ctx.stroke();
+      for (var n = 0; n <= cur; n++) {
+        ctx.beginPath(); ctx.arc(px(tr[n]), py(Math.min(tr[n] * tr[n], maxL)), n === cur ? 7 : 4, 0, Math.PI * 2);
+        ctx.fillStyle = n === cur ? C.red : C.blue; ctx.fill();
+      }
+      ctx.font = "600 20px ui-monospace, Consolas, monospace";
+      ctx.fillStyle = C.ink2;
+      ctx.fillText("θ = " + tr[cur].toFixed(3), pad, pad);
+      ctx.fillText("η = " + s.lr.toFixed(2), pad, pad + 28);
+      if (Math.abs(tr[cur]) > 1.15 && cur > 3) {
+        ctx.fillStyle = C.red; ctx.fillText("已经跑出画面 —— 发散了", pad, pad + 58);
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

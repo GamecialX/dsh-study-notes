@@ -41,6 +41,8 @@
 章末整卷测试与成绩单（客观题自动判分、主观题按评分要点自评、保留最佳与最近成绩）、知识图谱、全文搜索、
 `localStorage` 持久化。
 
+**另一种交付形态（v3.0 起）：HTML 学习库。** 用户不想用 Typora、想要能插图 / 能放可拖演示 / 打开就好看的课时，agent 会改为生成一座纯静态 HTML 库：一节一页，`index.html` → 章首页 → 节页，轨道与上下节翻页由外壳生成，演示可以播放 / 拖动 / 改参数，练习即时判分，进度存在 `localStorage`。**双击就能看**：没有构建、没有 CDN、没有 module / fetch，断网可用。两种形态二选一，不会同一套内容写两份。
+
 ---
 
 ## 二、安装
@@ -109,6 +111,8 @@ dsh-study-notes/
 │   │   ├── portal-standard.md           # 门户数据契约（concepts / sheet）、视图、渲染、判分、启动脚本
 │   │   ├── editor-compatibility.md      # Typora 踩坑记录：为什么不用 callout、公式不显示怎么查
 │   │   ├── theory-line.md               # 理论线：L1–L8、知识卷轴、引用规矩、混合课怎么分章
+│   │   ├── theory-line.md               # 理论线：L1–L8、知识卷轴、引用规矩、混合课怎么分章
+│   │   ├── html-line.md                 # HTML 学习库线：目录树、manifest、宿主协议、主题变量、演示契约
 │   │   └── subject-playbooks.md         # 数学/代码/语言/人文/操作型/应试/纯理论 的分科目打法
 │   ├── templates/         # 可直接复制/填充的骨架
 │   │   ├── syllabus.md checklist.md section-note.md section-note-theory.md cheat-sheet.md
@@ -118,16 +122,22 @@ dsh-study-notes/
 │   │   ├── fix-mathbb.mjs                # \mathbb{…} → unicode 花体（Typora 1.14 渲染不了）
 │   │   ├── 启动学习服务器.bat  start_server.sh
 │   │   └── web/{index.html, notes_data.js, serve.mjs, vendor/katex/}
+│   │   ├── html/                        # HTML 学习库线（v3.0）：骨架与外壳，用 shell 逐字节复制
+│   │   │   ├── index.html chapter.html section.html manifest.example.json
+│   │   │   └── src/css/{theme.css, theme-course.css}  src/js/{shell.js, demo.js}
 │   └── scripts/
 │       ├── check-library.mjs            # 校验器（全库 / --only 单篇 / --strict / --replay-to 照做重放）
-│       └── run-course.mjs               # 在重放快照里真实运行【运行】命令，比对或生成输出与答案快照
+│       ├── run-course.mjs               # 在重放快照里真实运行【运行】命令，比对或生成输出与答案快照
+│       ├── html-lint.mjs                # HTML 库形状机检（HTML01–07 error，HTML11–14 warning）
+│       └── html-nav.mjs                 # manifest.json → src/js/nav-data.js（file:// 不能 fetch）
 └── test/                  # 开发自测（不参与运行时）
     ├── verify-plugin.mjs
     ├── check-fixture.mjs
     ├── run-sample.mjs
     └── fixtures/
         ├── progressive-ch1/             # 代码类渐进式样章：新结构的参考样本与回归夹具
-        └── math-ch1/                    # 非代码样章（数学推导本）：确认课程线规则不强求 project/
+        ├── math-ch1/                    # 非代码样章（数学推导本）：确认课程线规则不强求 project/
+        └── html-mini/                   # HTML 线最小库：1 章 3 节，机检与导航回归
 ```
 
 ---
@@ -135,7 +145,8 @@ dsh-study-notes/
 ## 四、自己跑一遍测试
 
 ```bash
-# 1) 插件层：语法、skill provider 契约、门户渲染器与判分函数、模板行尾、资产清单
+# 1) 插件层：语法、skill provider 契约、门户渲染器与判分函数、模板行尾、资产清单、
+#    HTML 线（模板占位符与宿主协议、夹具机检 0 error、nav-data 生成、断链与 module 能被抓）
 node test/verify-plugin.mjs
 
 # 2) 校验器端到端：合规库 0 error；注入缺陷的库报 error；渐进式样章在 --strict 下 0 error / 0 warning；
@@ -259,7 +270,34 @@ R1–R13 假设「有一份可以逐行敲出来的工程产物」。哲学、�
 - 判断走哪条线、混合课怎么按章分配（大纲章表标 `类型：理论 / 实践`）、引用具体写法，见 `assets/study-notes/references/theory-line.md`；节模板是 `templates/section-note-theory.md`。
 - **L1–L8 不进校验器**：脚本只认结构与绑定，理论线的"讲透没有"由交付前人工过（`quality-gates.md`）。
 - **两种节奏**：建库时 P0 会问一句——**逐章停**（每章交付标 🟦，等你反馈、改完再开下一章；只在第一章交付后主动给一份"你可以改的地方"清单）或**连续推进**（确认样章后一口气生成，只在 P0/P2.5 停）。两种都不许在节中间停下来问。
-- 同一次 P0 还会问**输出载体**：目前只有 Typora 优先的 Markdown + 本地门户这一种，如实告知，不假称支持别的格式。
+- 同一次 P0 还会问**输出载体**：Typora 优先的 Markdown + 本地门户，或 v3.0 起的 HTML 学习库（见 5.4），二选一，不假称支持 PDF / 线上站点。
+
+### 5.4 HTML 学习库线（v3.0 新增）
+
+同一门课，另一种装帧：**一节一页**，`index.html` → `chNN/index.html` → `chNN/secNN.html`，双击就开。适合"要在正文里插图、要放能拖的演示、要好看的版式"的课。选 HTML 就**只产 HTML**，不会同一套内容再写一份 MD。
+
+| 部件 | 说明 |
+|---|---|
+| `manifest.json` | 唯一事实源：章标题、节标题、文件名、顺序。`html-nav.mjs` 把它编译成 `src/js/nav-data.js`（file:// 不能 fetch，导航只能以 script 形式进页面） |
+| `src/css/theme.css` | 主题：纸纹底、980 版心、海报盒、页边批注、概念卡、演示卡、深色变量。**逐字节复制，不手改** |
+| `src/css/theme-course.css` | 课程覆盖层（可选）：只改变量与点缀，不动骨架 |
+| `src/js/shell.js` | 外壳：轨道、上下节翻页、主题切换、完成标记、批注折叠、练习判分 |
+| `src/js/demo.js` | 演示引擎：`StudyDemo.register(id, { tier, steps, state, frame, readout })`，滑块/按钮/时间轴按 `data-act` / `data-param` 自动绑定，状态写进 URL hash（`#t=0.42&lr=1.05`），空格播放、←→ 单步 |
+| `chNN/secNN.html` | 节页：从 `templates/html/section.html` 填占位符。四拍、概念卡、代码块、`你应该看到`、演示卡、练习、小结、来源与时效 |
+| `CREDITS.md` | 图片/视频来源与许可（搜来的素材必须记） |
+
+约束（`references/html-line.md` 是完整契约）：**六条宿主协议**（`data-lesson/chapter/root/track/title`、外壳生成 `#track`/`#pager`、进度只进 localStorage、相对路径、不联网）＋**file:// 禁区**（`type="module"`、`import`、`fetch()` 本地文件、Worker 都会被拦）。
+
+交互是插入件，不是主体：判据是「读的时间明显多于点的时间」；三项准入（不试不会信 / 懂了做不对 / 文字绕不清）、三项禁入（本来就会信 / 长链推理 / 只为好看）；正文删掉所有组件仍要读通。演示分四档：F1 滑块重画、F2 可拖（主力）、F3 预渲染帧、F4 视频（只点缀），每章 1–2 个。
+
+机检：
+
+```bash
+node assets/study-notes/scripts/html-nav.mjs  "<库>"            # manifest → src/js/nav-data.js
+node assets/study-notes/scripts/html-lint.mjs "<库>"            # HTML01–07 必须 0 error；HTML11–14 是 warning
+```
+
+`test/fixtures/html-mini/` 是一份能过机检、能双击打开的最小库（1 章 3 节），既可当参考，也是回归夹具；`verify-plugin.mjs` 第 7 节会跑它，并故意注入 `type="module"` 与本机绝对路径，确认这两类错误能被抓住。
 
 ---
 ## 六、老库怎么按新结构逐步迁移
