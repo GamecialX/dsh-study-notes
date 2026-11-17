@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>让参数自己往下走 · 第 4 节：把三个数放在同一张图里</title>
+<link rel="stylesheet" href="../src/css/theme.css">
+<script src="../src/js/nav-data.js"></script>
+<script src="../src/js/demo.js"></script>
+<script src="../src/js/shell.js" defer></script>
+</head>
+<body data-lesson="ch01/sec04" data-chapter="ch01" data-track="practice"
+      data-title="第 4 节：把三个数放在同一张图里" data-root="../">
+
+<div class="track" id="track"><div class="in"></div></div>
+
+<div class="mast">
+  <div>第 1 章 · 让参数自己往下走 / 第 4 节</div>
+  <div class="r">
+    <button id="notes-btn" type="button" class="mini" aria-expanded="false" aria-controls="side-notes" title="页边批注（快捷键 n）">注 <span id="notes-count">0</span></button>
+    <button id="theme-btn" type="button" class="mini">主题</button>
+    <button id="done-btn" type="button" class="mini" aria-pressed="false">✓ 标记本节完成</button>
+  </div>
+</div>
+
+<div class="poster"><div class="box">
+  <div class="l">
+    <div class="k">SECTION 04 · 实践线 · 30 MIN</div>
+    <h1>把三个数放在<em>同一张图</em>里</h1>
+    <div class="sub">曲率 k、步长 η、余量 2/k − η。三个数分开看都对，放在一起才知道这一步到底安不安全。</div>
+    <div class="m"><span>产物 <b>project/check_lr.py</b></span><span>前置 <b>第 3 节的 2/k 上限</b></span><span>概念 <b>余量</b></span></div>
+  </div>
+  <div class="r">
+    <svg viewBox="0 0 400 250" role="img" aria-label="版画插画：一条抛物线，两条不同步长的轨迹">
+      <path d="M30 46 Q200 252 370 46" fill="none" stroke="#f3ece0" stroke-width="2.2"/>
+      <circle cx="120" cy="120" r="4" fill="#e8734a"/>
+      <circle cx="292" cy="92" r="4" fill="#e8734a"/>
+      <text x="238" y="70" font-family="Georgia,serif" font-style="italic" font-size="12" fill="#f3ece0">L(θ)=θ²</text>
+    </svg>
+  </div>
+</div></div>
+
+<div class="wrap">
+  <div class="main">
+
+    <div class="lead">
+      <div><div class="h">你现在手上</div><p>一条能跑的 <code>train.py</code>，以及一句判据 <code>η &lt; 2/k</code>——但你还不知道 <code>k</code> 从哪来。</p></div>
+      <div><div class="h">本节结束时</div><p>你能对着一个函数估出 <code>k</code>、算出余量、并说清"余量小了会发生什么"。</p></div>
+    </div>
+
+    <div class="prev"><b>接上一节</b>上一节我们用 <code>2/k</code> 判过步长。这一节把那三个数摆在一张图上，让它们互相说话。</div>
+
+    <div class="step">
+      <div class="sh"><span class="n">STEP 01</span><h2>先想：同一座山谷，为什么要两种看法</h2></div>
+
+      <div class="think">
+        <div class="t">先别往下看</div>
+        <p>如果只能看一个数，你会看 <code>k</code>、看 <code>η</code>、还是看 <code>2/k − η</code>？为什么？</p>
+        <details><summary class="a">想好了再看（先自己写一句）</summary>
+          <p>看余量。单独看 <code>η</code> 小不代表安全（<code>k</code> 大时照样炸），单独看 <code>k</code> 大也不代表会炸（<code>η</code> 够小就没事）——只有差才是"还剩多少余地"。</p>
+        </details>
+      </div>
+
+      <div class="beat">讲</div>
+      <div class="body">
+        <p>同一个山谷有两种读法：按"位置"读，看每一跳落在哪；按"余量"读，看每一步离发散线还有多远。两种读法说的是同一件事，但第二种能提前算出来。</p>
+      </div>
+
+      <div class="tabs" data-tabs>
+        <div class="tbar" role="tablist" aria-label="两种读法">
+          <button type="button" role="tab" data-tab="t-a" aria-selected="true" aria-controls="t-a">按位置读</button>
+          <button type="button" role="tab" data-tab="t-b" aria-selected="false" aria-controls="t-b">按余量读</button>
+        </div>
+        <div class="tpanel" id="t-a" role="tabpanel">
+          <p>横轴是 θ，纵轴是 L(θ)。每一跳画成一个点，连起来就是轨迹：点越靠谷底越好，来回跨就是震荡。这种读法直观，但要画出来才看得见。</p>
+        </div>
+        <div class="tpanel" id="t-b" role="tabpanel" hidden>
+          <p>只算一个数：<code>2/k − η</code>。大于 0 就收敛，越接近 0 收敛越慢，小于 0 就发散。这种读法不用画图，落地成代码就是一句判断。</p>
+        </div>
+      </div>
+
+      <div class="beat">做</div>
+      <div class="calc" data-calc data-expr="2 / k - eta">
+        <div class="chead">页内计算器 · 余量 2/k − η</div>
+        <div class="cbody">
+          <div class="cinputs">
+            <label>步长 η <input data-var="eta" type="number" step="0.01" value="0.1"></label>
+            <label>曲率 k <input data-var="k" type="number" step="1" value="2"></label>
+          </div>
+          <div class="cout"><b data-role="calc-out">—</b><span>大于 0 才算安全</span></div>
+          <p class="cnote">把 <code>k</code> 改成 200：η 还是 0.1，余量立刻变成负的。这就是"换一层就炸"的算术版本。</p>
+          <p class="cnote" data-role="calc-err"></p>
+        </div>
+      </div>
+
+      <div class="beat">看</div>
+      <div class="see">
+        <div class="k">你应该看到</div>
+        <p>η = 0.1、k = 2 时余量是 0.9（很安全）；k = 200 时余量是 −0.09（必炸）。同一个 0.1，安全与否完全取决于 k。</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="sh"><span class="n">STEP 02</span><h2>做：把轨迹一帧帧落到图上</h2></div>
+
+      <div class="think">
+        <div class="t">先猜</div>
+        <p>拖动帧序列的进度条，第 6 帧的点会比第 1 帧更靠近谷底吗？还是更远？</p>
+        <details><summary class="a">想好了再看</summary>
+          <p>更靠近。这组帧用的是 η = 0.1、乘数 0.8，每帧缩到上一帧的八成。</p>
+        </details>
+      </div>
+
+      <div class="beat">做</div>
+      <div class="demo frames" data-frames="pend" data-count="6" data-dir="../src/media/frames/" data-ext="svg" data-tier="3">
+        <div class="dhd"><span>F3 · 帧序列</span><span class="dout" data-role="frame-out">1 / 6</span></div>
+        <div class="dstage">
+          <img data-frame src="../src/media/frames/pend-1.svg" alt="第 1 帧：点在山坡上">
+        </div>
+        <div class="dside">
+          <div class="k">你应该看到</div>
+          <p>拖动进度条或用 ← →：点一帧一帧往谷底靠，每帧的距离都缩到上一帧的八成左右。</p>
+        </div>
+        <div class="dctrl">
+          <button class="btn" type="button" data-act="prev">◀ 上一帧</button>
+          <label>帧 <input data-role="frame-range" type="range" min="1" max="6" step="1" value="1"></label>
+          <button class="btn" type="button" data-act="next">下一帧 ▶</button>
+        </div>
+      </div>
+
+      <div class="beat">看</div>
+      <div class="see">
+        <div class="k">你应该看到</div>
+        <p>按 ← → 单帧步进，看第 4 帧到第 6 帧的变化越来越小——收敛就是这个样子的：变化量本身在缩小。</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="sh"><span class="n">STEP 03</span><h2>看：真实录制里，余量小是什么手感</h2></div>
+
+      <div class="beat">看</div>
+      <div class="demo">
+        <div class="dstage">
+          <video controls preload="metadata" src="../src/media/demo.mp4" aria-label="真实录制：余量变小时损失曲线的抖动"></video>
+          <p class="dcap">这段录的是把 η 从 0.1 拖到 0.49 的全过程：前一半损失一路下降，后一半开始左右横跳但还没发散——余量接近 0 的样子。</p>
+        </div>
+        <div class="dside">
+          <div class="k">你应该看到</div>
+          <p>损失曲线前半段单调下降；拖到 0.45 以上时开始出现"下降一点、弹回一点"的锯齿，但幅度不越来越大——那是余量还为正、只是很小。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz">
+      <div class="qh"><h3>练习：三个数，自己先算</h3>
+        <p class="note">前两题自动判分；第 3 题按自评记录，不计入分数。</p></div>
+
+      <div class="q" data-qid="q1" data-type="single" data-answer="b" data-points="40">
+        <p>1. L(θ) = 50θ²，η = 0.05，这一步（ ）</p>
+        <label><input type="radio" name="q1" value="a">A. 安全，余量很大</label>
+        <label><input type="radio" name="q1" value="b">B. 正好卡在发散边上</label>
+        <label><input type="radio" name="q1" value="c">C. 完全收敛不了</label>
+        <div class="hints">
+          <details><summary>提示 1 · 先求 k</summary><p>L = aθ² 的曲率是 2a。这里是 100。</p></details>
+          <details><summary>提示 2 · 再看余量</summary><p>2/100 − 0.05 = −0.03？还是 0.02 − 0.05？先把 2/k 算出来再减。</p></details>
+        </div>
+      </div>
+
+      <div class="q" data-qid="q2" data-type="fill" data-answer="0.4" data-tol="0.02" data-points="30"
+           data-ta-why="θ′ = θ(1 − ηk)，k = 2">
+        <p>2. 设 L(θ) = θ²，当前 θ = 1，η = 0.3，走一步之后 θ = <input class="fill" type="text" inputmode="decimal" aria-label="填一个数">（填小数）</p>
+        <div class="hints">
+          <details><summary>提示 · 只乘一次</summary><p>θ 变成 θ × (1 − 2η)，η = 0.3 时乘数是 0.4。</p></details>
+        </div>
+      </div>
+
+      <div class="q" data-qid="q3" data-type="self" data-points="0">
+        <p>3. 自评：你能指着一个函数说出它的 k 大约是多少、当前 η 还剩多少余量吗？</p>
+        <div class="self-scale">
+          <button type="button" data-score="0">完全说不出</button>
+          <button type="button" data-score="1">有个模糊印象</button>
+          <button type="button" data-score="2">能讲清</button>
+          <button type="button" data-score="3">能举例推到别的函数</button>
+        </div>
+      </div>
+
+      <button id="grade" data-act="grade" type="button">交卷并判分</button>
+      <p class="result" data-role="quiz-result">还没有交卷。</p>
+    </div>
+
+    <div class="sum">
+      <h3>本节小结</h3>
+      <ul><li>安全与否看余量 <code>2/k − η</code>，不看单个数字。</li><li>余量接近 0 时损失开始锯齿，但幅度不扩大；余量为负才真发散。</li></ul>
+      <div class="next">留给下一节：如果每个方向的 k 都不一样，能不能让每个方向自己定 η？下一节用"按方向缩放"引出 Adam。</div>
+    </div>
+
+    <div class="index">
+      <h3>概念索引</h3>
+      <ol><li>余量（margin）</li></ol>
+    </div>
+
+    <div class="sources">
+      <h3>来源与时效</h3>
+      <ol><li>Boyd, S. &amp; Vandenberghe, L. Convex Optimization, 2004, §9.3（收敛步长 ≤ 2/L）。</li></ol>
+      <div class="stamp">核对时间：2026-11</div>
+    </div>
+
+  </div><!-- .main -->
+
+  <div class="side" id="side-notes">
+    <aside class="marg">
+      <div class="n"><b>余量为什么不用比例</b>写成 (2/k − η)/(2/k) 也对，只是多一次除法；绝对值更好读。</div>
+      <div class="n"><b>k 怎么估</b>拿两个点算差分，或者直接看二阶导的系数：L = aθ² 时 k = 2a。</div>
+    </aside>
+  </div>
+</div><!-- .wrap -->
+
+<div class="pager" id="pager"></div>
+
+</body>
+</html>

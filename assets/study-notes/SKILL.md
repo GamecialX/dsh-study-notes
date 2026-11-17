@@ -308,7 +308,7 @@ node <skill>/scripts/html-lint.mjs "<根>" --strict                           # 
 
 ---
 
-## 八、HTML 学习库线（v3.0）
+## 八、HTML 学习库线（v3.0 起，v3.1 补齐组件）
 
 用户选了 HTML 载体时读本节，细则与规则编号全在 `references/html-line.md`。一句话：**同样的课，换一种装帧**——一节一页、能插图、能放可拖演示、双击就开，不需要构建、不需要联网。
 
@@ -339,7 +339,7 @@ node <skill>/scripts/html-lint.mjs "<根>" --strict                           # 
 2. 页头依次引 `theme.css`、`nav-data.js`、`demo.js`（**同步，不能加 defer**）、`shell.js`（defer）
 3. 外壳生成轨道 `#track` 与翻页 `#pager`：页面里只放这两个空容器，不要手写节点
 4. 进度与分数只进 `localStorage`：`study:progress:<lesson>`、`study:scores:<lesson>`；每次保存派发 `study-progress` 事件
-5. 所有资源用**相对路径**，不许 `http(s)://`、不许 CDN、不许本机绝对路径
+5. 所有资源用**相对路径**，不许 `http(s)://`、不许 CDN、不许本机绝对路径（F3 帧与视频放 `src/media/`，图片放 `src/image/`）
 6. 不许 `type="module"`、`import`、`fetch()` 读本地文件、`new Worker`——file:// 下都会被拦
 
 > <b>*Important*</b>
@@ -357,9 +357,11 @@ HTML 线不是"把课做成小程序"。判据只有一条：**读的时间明�
 
 不做：不按交互数量打分，不设"至少 N 个组件"的门槛，不做点击热度统计。
 
-### 8.4 可拖演示（F 档）怎么写
+### 8.4 组件怎么写（v3.1 起全部有默认实现）
 
-档位：**F1** 参数滑块+重画（最轻）；**F2** canvas/SVG + 播放/暂停/步进/时间轴/改参数（主力）；**F3** 预渲染帧序列+拖动条（兜底，帧 > 5 MB 要外置到 `src/media/`）；**F4** 真视频（只点缀，不能真拖）。每章 1–2 个，别节节都有。
+#### 8.4.1 F 档演示
+
+档位：**F1** 参数滑块+重画（最轻，`steps: 0`，控制条里不要播放键）；**F2** canvas/SVG + 播放/暂停/步进/时间轴/改参数（主力）；**F3** 预渲染帧序列+拖动条（兜底，帧 > 5 MB 要外置到 `src/media/frames/`）；**F4** 真视频（只点缀，不能真拖，`.dstage` 里放 `<video controls preload="metadata">` + 一句 `.dcap`）。每章 1–2 个，别节节都有。
 
 写法（模板 `section.html` 里有完整可跑的示例）：
 
@@ -386,9 +388,19 @@ HTML 线不是"把课做成小程序"。判据只有一条：**读的时间明�
 
 三条教学硬要求：① 标题一句话说清"演示的是什么"（不是"动画演示"）；② `你应该看到` 与动手步骤成对；③ 至少三个"值得停下的点"（起点／转折／终点），正文写"把滑块拖到 0.9 再看"。
 
+F3 与 F4 的完整写法见模板 `section.html` 里的注释块（F3：`.demo.frames[data-frames][data-count][data-dir][data-ext]` + `img[data-frame]` + `input[data-role=frame-range]`；帧文件命名 `名-1.svg … 名-N.svg`）。
+
+#### 8.4.2 阅读 / 练习 / 工具（v3.1 新增，都有外壳实现）
+
+- **标签页（A）**：`.tabs[data-tabs]` + `.tbar [role=tab][data-tab=ID]` + `.tpanel#ID`，同时只有一个面板不带 `hidden`；外壳管点击与 ←→。
+- **分层提示（B）**：`.hints` 里放两三个 `<details><summary>提示 1 · …</summary>`，只给方向不给答案。
+- **页内计算器（E）**：`.calc[data-calc][data-expr="2 / k - eta"]` + `input[data-var=eta]` / `[data-var=k]` + `[data-role=calc-out]`（可选 `[data-role=calc-err]`）。表达式只允许数字、变量名、`+ - * / ( )` 和 `ceil/floor/round/abs/sqrt/min/max`，外壳自写求值、不用 `eval`；变量名必须与 `data-var` 一一对应，否则机检 HTML16 报错。要做「剩下几步」这类除法，写 `epochs * ceil(n / batch) - done`。
+- **继续上次**：首页放 `<div data-role="continue"></div>`，章首页加 `data-scope="chapter"`；外壳读 `study:last` 生成"继续上次 + 节标题 + 进度"。
+- **章节卡进度**：不用手写，外壳按 nav-data 生成每章完成数与均分；**章首页顶部的进度只算本章**（库首页才算全库）。manifest 里给节加 `minutes`/`product` 后，节卡会显示"40 分钟 · project/train.py"。
+
 ### 8.5 校验
 
-- `node <skill>/scripts/html-lint.mjs "<根>"`：HTML01–07（manifest 合法、manifest↔磁盘一致、相对链接存在、无外链、无本机绝对路径、无 module/fetch/Worker、`data-lesson` 对得上）**必须 0 error**；HTML11–14（h1/#pager/#track、概念编号唯一、正文体量、组件存在）是 warning，逐条判断。
+- `node <skill>/scripts/html-lint.mjs "<根>"`：**error 级** HTML01–07（manifest 合法、manifest↔磁盘一致、相对链接存在、无外链、无本机绝对路径、无 module/fetch/Worker、`data-lesson` 对得上；HTML06 只扫可执行部分，`<pre>` 里的代码样例不算）+ HTML15–18（标签页面板对不上、计算器变量未声明、帧数与文件不符、视频无 controls）**必须 0 error**；**warning 级** HTML11–14（h1/#pager/#track、概念编号唯一、正文体量、组件存在）与 HTML19（单页 > 800 KB / 帧总量 > 5 MB / 内联 SVG > 6 张）逐条判断。`--strict` 把 warning 当 error（HTML14 除外），交付前跑一次。
 - 浏览器实开：库首页 → 章 → 节，轨道高亮对、上下节能走、演示能播能拖、交卷有分、刷新进度在。
 - 体积软线：单页 > 800 KB 改用"拆数据文件 + 本地服务器"；内联 SVG > 6 张移到 `src/image/`。
 

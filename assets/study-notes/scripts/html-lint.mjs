@@ -74,6 +74,7 @@ const diskHtml = existsSync(root) ? walk(root, []) : [];
 /* ---------- 逐页检查 ---------- */
 const RES_ATTR = /\b(?:src|href)\s*=\s*["']([^"']+)["']/gi;
 const LOCAL_ABS = /(?:[A-Za-z]:[\\/]|file:\/\/\/|\/Users\/|\/home\/)/;
+const CALC_FNS = ["ceil", "floor", "round", "abs", "min", "max", "sqrt"];
 
 for (const page of pages) {
   if (!existsSync(page.path)) {
@@ -125,11 +126,14 @@ for (const page of pages) {
   }
 
   // HTML06 file:// 会坏掉的东西
-  if (/type\s*=\s*["']module["']/i.test(html)) err("HTML06", file, '用了 type="module"（file:// 下会被 CORS 拦）');
-  if (/\bimport\s+[\w{*]/.test(html)) err("HTML06", file, "用了 import 语句（file:// 下不可用）");
-  if (/\bfetch\s*\(/.test(bodyText)) err("HTML06", file, "用了 fetch() 读本地文件（file:// 下不可用）");
-  if (/XMLHttpRequest/.test(bodyText)) err("HTML06", file, "用了 XMLHttpRequest（file:// 下不可用）");
-  if (/new\s+Worker\s*\(/.test(html)) err("HTML06", file, "用了 Web Worker（file:// 下不可用）");
+  // 代码样例（<pre> 里的内容）不算页面行为：python 的 import math 不该被当成 ES import
+  const scanAll = html.replace(/<pre[\s\S]*?<\/pre>/gi, " ");
+  const scanBody = scanAll.replace(/<script[\s\S]*?<\/script>/gi, " ");
+  if (/type\s*=\s*["']module["']/i.test(scanAll)) err("HTML06", file, '用了 type="module"（file:// 下会被 CORS 拦）');
+  if (/\bimport\s+[\w{*][^\n]*\bfrom\s*["']/.test(scanAll)) err("HTML06", file, "用了 import 语句（file:// 下不可用）");
+  if (/\bfetch\s*\(/.test(scanBody)) err("HTML06", file, "用了 fetch() 读本地文件（file:// 下不可用）");
+  if (/XMLHttpRequest/.test(scanBody)) err("HTML06", file, "用了 XMLHttpRequest（file:// 下不可用）");
+  if (/new\s+Worker\s*\(/.test(scanAll)) err("HTML06", file, "用了 Web Worker（file:// 下不可用）");
 
   if (!isSection) continue;
 
@@ -162,6 +166,74 @@ for (const page of pages) {
   // HTML14 除了段落没有任何组件
   const comp = (html.match(/class\s*=\s*["'][^"']*\b(?:step|think|concept|code|figure|demo|rows|see|tabs|rows)\b/gi) || []).length;
   if (comp === 0) warn("HTML14", file, "整节接近纯文字（没有任何组件）——看看有没有值得交互的地方");
+
+  // HTML15 标签页结构：data-tab 与 .tpanel#id 一一对应，同时只有一个面板可见
+  if (/data-tabs/.test(html)) {
+    const tabIds = [...html.matchAll(/data-tab\s*=\s*["']([^"']+)["']/gi)].map((x) => x[1]);
+    const panels = [...html.matchAll(/<div[^>]*class\s*=\s*["'][^"']*\btpanel\b[^"']*["'][^>]*>/gi)].map((x) => x[0]);
+    const panelIds = panels.map((t) => (/id\s*=\s*["']([^"']+)["']/i.exec(t) || [])[1]).filter(Boolean);
+    if (tabIds.length < 2) warn("HTML15", file, "data-tabs 里少于 2 个标签按钮");
+    for (const id of tabIds) if (!panelIds.includes(id)) err("HTML15", file, '标签 data-tab="' + id + '" 没有对应的 .tpanel#id');
+    for (const id of panelIds) if (!tabIds.includes(id)) warn("HTML15", file, "面板 #" + id + " 没有对应的标签按钮");
+    const visible = panels.filter((t) => !/\bhidden\b/i.test(t)).length;
+    if (visible !== 1) warn("HTML15", file, "同时可见的面板应为 1 个，现在是 " + visible + " 个（其它面板写 hidden）");
+  }
+
+  // HTML16 页内计算器：表达式只用白名单字符，变量必须声明，输出位必须在
+  if (/data-calc/.test(html)) {
+    const calcTags = [...html.matchAll(/<[^>]*\bdata-calc\b[^>]*>/gi)].map((x) => x[0]);
+    for (const tag of calcTags) {
+      const expr = (/(?:^|\s)data-expr\s*=\s*["']([^"']*)["']/i.exec(tag) || [])[1] || "";
+      if (!expr.trim()) { err("HTML16", file, "data-calc 缺 data-expr"); continue; }
+      if (/[^\w\s+\-*/().]/.test(expr)) { err("HTML16", file, "表达式里有不允许的字符：" + expr); continue; }
+      for (const m3 of expr.matchAll(/\b([A-Za-z_][A-Za-z0-9_]*)\s*\(/g)) {
+        if (CALC_FNS.indexOf(m3[1].toLowerCase()) < 0) err("HTML16", file, "不支持的函数 " + m3[1] + "（可用：" + CALC_FNS.join(" ") + "）");
+      }
+      const declared = new Set([...html.matchAll(/data-var\s*=\s*["']([^"']+)["']/gi)].map((x) => x[1]));
+      const bare = expr.replace(/\b(?:ceil|floor|round|abs|min|max|sqrt)\s*\(/gi, "(");
+      for (const m2 of bare.matchAll(/[A-Za-z_][A-Za-z0-9_]*/g)) {
+        if (!declared.has(m2[0])) err("HTML16", file, "表达式里的变量 " + m2[0] + " 没有 data-var 输入框");
+      }
+    }
+    if (!/data-role\s*=\s*["']calc-out["']/i.test(html)) err("HTML16", file, '缺 <b data-role="calc-out"> 输出位');
+  }
+
+  // HTML17 帧序列：data-count 与真实帧文件对得上，拖动条与读数位要在
+  let frameBytes = 0;
+  for (const tag of [...html.matchAll(/<div[^>]*class\s*=\s*["'][^"']*\bframes\b[^"']*["'][^>]*>/gi)].map((x) => x[0])) {
+    const g = (n) => (new RegExp(n + '\\s*=\\s*"([^"]*)"', "i").exec(tag) || [])[1] || "";
+    const name = g("data-frames"), count = parseInt(g("data-count"), 10), dir = g("data-dir"), ext = g("data-ext") || "svg";
+    if (!name || !count || count < 2) { err("HTML17", file, "帧序列缺 data-frames 或 data-count（至少 2 帧）"); continue; }
+    if (!dir) { err("HTML17", file, "帧序列缺 data-dir"); continue; }
+    const base = resolve(dirname(page.path), dir);
+    if (!existsSync(base)) { err("HTML17", file, "帧目录不存在：" + dir); continue; }
+    const missing = [];
+    for (let i = 1; i <= count; i++) {
+      const fp = join(base, name + "-" + i + "." + ext);
+      if (!existsSync(fp)) missing.push(name + "-" + i + "." + ext);
+      else frameBytes += statSync(fp).size;
+    }
+    if (missing.length) err("HTML17", file, "缺少帧文件：" + missing.slice(0, 3).join(", ") + (missing.length > 3 ? " 等 " + missing.length + " 个" : ""));
+  }
+  if (/\bframes\b/.test(html) && !/data-role\s*=\s*["']frame-range["']/i.test(html)) {
+    err("HTML17", file, '帧序列缺 <input data-role="frame-range">');
+  }
+
+  // HTML18 视频：要能操作、要说明录的是什么
+  if (/<video[\s>]/i.test(html)) {
+    for (const tag of [...html.matchAll(/<video[^>]*>/gi)].map((x) => x[0])) {
+      if (!/\bcontrols\b/i.test(tag)) err("HTML18", file, "视频缺 controls");
+    }
+    if (!/class\s*=\s*["'][^"']*\bdcap\b/i.test(html)) warn("HTML18", file, "视频没有一句 .dcap 说明这段录的是什么");
+    if (!/你应该看到/.test(html)) warn("HTML18", file, "视频没有配「你应该看到」");
+  }
+
+  // HTML19 体积软线（warning）：单页 >800KB / 帧总量 >5MB / 内联 SVG >6 张
+  const pageBytes = Buffer.byteLength(html, "utf8");
+  if (pageBytes > 800 * 1024) warn("HTML19", file, "单页 " + Math.round(pageBytes / 1024) + " KB，超过 800 KB 软线：考虑拆节或改服务器打开");
+  if (frameBytes > 5 * 1024 * 1024) warn("HTML19", file, "帧序列共 " + Math.round(frameBytes / 1048576) + " MB（>5 MB），建议改成视频或外置目录");
+  const svgCount = (html.match(/<svg[\s>]/gi) || []).length;
+  if (svgCount > 6) warn("HTML19", file, "单页内联 SVG " + svgCount + " 张（>6），建议移到 src/image/*.svg 外链");
 }
 
 /* ---------- HTML02 反查：磁盘上有、manifest 里没有 ---------- */

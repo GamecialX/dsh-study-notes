@@ -15,19 +15,37 @@ window.STUDY_NAV = {
           "id": "sec01",
           "lesson": "ch01/sec01",
           "title": "步长取多大才不会来回震荡",
-          "file": "ch01/sec01.html"
+          "file": "ch01/sec01.html",
+          "minutes": 45,
+          "product": "project/train.py",
+          "summary": ""
         },
         {
           "id": "sec02",
           "lesson": "ch01/sec02",
           "title": "把梯度写成能跑的一行",
-          "file": "ch01/sec02.html"
+          "file": "ch01/sec02.html",
+          "minutes": 40,
+          "product": "project/train.py",
+          "summary": ""
         },
         {
           "id": "sec03",
           "lesson": "ch01/sec03",
           "title": "损失突然变大，先看哪三个数",
-          "file": "ch01/sec03.html"
+          "file": "ch01/sec03.html",
+          "minutes": 35,
+          "product": "project/check_lr.py",
+          "summary": ""
+        },
+        {
+          "id": "sec04",
+          "lesson": "ch01/sec04",
+          "title": "把三个数放在同一张图里",
+          "file": "ch01/sec04.html",
+          "minutes": 30,
+          "product": "project/check_lr.py",
+          "summary": ""
         }
       ]
     }

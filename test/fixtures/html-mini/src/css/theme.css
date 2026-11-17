@@ -292,3 +292,82 @@ figcaption{margin-top:10px;font-family:var(--sans);font-size:12.5px;line-height:
   .code code{font-size:12px}
 }
 html[data-theme="dark"] .code,html[data-theme="dark"] .chcard{background:#1b2130}
+
+/* ===================================================================
+ * 阶段二组件（v3.1）：标签页 / 分层提示 / 页内计算器 / F3 帧序列 / F4 视频 /
+ * 继续上次 / 章节卡进度。全部沿用上面的语言：1.5px 墨线、4px 牛皮纸硬投影、
+ * 等宽小红标签；不引入外链、不引入构建。
+ * =================================================================== */
+
+/* —— A 阅读类：标签页（同一块地方放几组对照内容） —— */
+.tabs{border:1.5px solid var(--ink);background:var(--paper-2);margin:22px 0;box-shadow:4px 4px 0 var(--kraft)}
+.tabs .tbar{display:flex;flex-wrap:wrap;border-bottom:1.5px solid var(--ink);background:var(--paper)}
+.tabs .tbar button{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;padding:9px 16px;
+  border:0;border-right:1px solid var(--line);background:none;color:var(--ink-3);cursor:pointer}
+.tabs .tbar button:hover{color:var(--ink)}
+.tabs .tbar button[aria-selected="true"]{background:var(--ink);color:#f3ece0}
+.tabs .tpanel{padding:16px 20px;font-size:15.5px;line-height:1.85}
+.tabs .tpanel[hidden]{display:none}
+.tabs .tpanel > :first-child{margin-top:0}
+.tabs .tpanel > :last-child{margin-bottom:0}
+.tabs .tpanel pre{margin:0;font-family:var(--mono);font-size:13px;line-height:1.7;overflow:auto}
+
+/* —— B 练习类：分层提示（先自己想，卡住了再逐层看） —— */
+.hints{margin:12px 0 0}
+.hints details{border:1px dashed rgba(29,63,107,.45);background:rgba(29,63,107,.045);padding:9px 14px;margin-top:8px}
+.hints summary{font-family:var(--sans);font-size:12.5px;color:var(--blue);cursor:pointer;outline:none}
+.hints summary::marker{color:var(--blue)}
+.hints p{margin:8px 0 0;font-size:14px;line-height:1.85;color:var(--ink-2)}
+.hints code{font-family:var(--mono);font-size:.92em;background:rgba(29,63,107,.09);padding:1px 4px}
+
+/* —— E 工具类：页内计算器（读者自己代入数字，不用离开页面） —— */
+.calc{border:1.5px solid var(--ink);background:#fffdf7;margin:22px 0;box-shadow:4px 4px 0 var(--kraft)}
+.calc .chead{display:flex;align-items:center;gap:12px;padding:7px 14px;border-bottom:1.5px solid var(--ink);
+  background:var(--paper-2);font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--red)}
+.calc .cbody{padding:14px 16px}
+.calc .cinputs{display:flex;flex-wrap:wrap;gap:10px 20px}
+.calc label{font-family:var(--mono);font-size:12px;display:flex;align-items:center;gap:6px;color:var(--ink-2)}
+.calc input{width:84px;font-family:var(--mono);font-size:13px;padding:2px 6px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.calc .cout{display:flex;align-items:baseline;gap:10px;margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
+.calc .cout b{font-family:var(--mono);font-size:22px;color:var(--blue);font-weight:600}
+.calc .cout span{font-family:var(--sans);font-size:12px;color:var(--ink-3)}
+.calc .cnote{margin:8px 0 0;font-family:var(--sans);font-size:12px;color:var(--ink-3);line-height:1.7}
+
+/* —— F3 帧序列 / F4 视频：都放在 .demo 的骨架里 —— */
+.demo .dstage img{display:block;width:100%;height:auto}
+.demo .dframe{padding:6px 14px;font-family:var(--mono);font-size:11px;color:var(--ink-3);border-top:1px solid var(--line)}
+.demo.frames .dstage{display:flex;align-items:center;justify-content:center;min-height:300px}
+.demo.frames .dstage img{width:auto;max-width:100%;max-height:460px}
+.demo.frames .dctrl input[type="range"]{flex:1;max-width:460px;width:auto}
+.demo .dstage video{display:block;width:100%;height:auto;background:#000}
+.demo .dcap{margin:8px 14px 12px;font-family:var(--sans);font-size:12.5px;line-height:1.75;color:var(--ink-3)}
+
+/* —— 库首页：继续上次 —— */
+.cont{display:flex;align-items:center;gap:14px;border:1.5px solid var(--ink);background:#fffdf7;
+  box-shadow:4px 4px 0 var(--kraft);padding:13px 18px;margin:18px 0 0;text-decoration:none;color:var(--ink)}
+.cont:hover{box-shadow:6px 6px 0 var(--kraft)}
+.cont .k{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--red);white-space:nowrap}
+.cont b{font-family:var(--serif);font-size:16px;font-weight:600;line-height:1.5}
+.cont .cmeta{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-left:auto;white-space:nowrap}
+
+/* —— 章节卡：加一条细进度与平均分 —— */
+.chcard .cinfo{flex:1;min-width:0;display:flex;flex-direction:column}
+.chcard .cbar{height:3px;background:var(--line);position:relative;margin:auto 0 6px;padding-top:10px;background-clip:content-box}
+.chcard .cbar i{position:absolute;left:0;top:0;bottom:0;background:var(--red);width:0}
+.chcard .cmeta{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.seccard .smeta{font-family:var(--mono);font-size:11px;color:var(--ink-3);white-space:nowrap}
+
+/* —— 深色主题补充 —— */
+html[data-theme="dark"] .tabs,html[data-theme="dark"] .calc,html[data-theme="dark"] .cont{background:#1b2130}
+html[data-theme="dark"] .tabs .tbar{background:#141821}
+html[data-theme="dark"] .calc input{background:#141821;color:var(--ink)}
+html[data-theme="dark"] .hints details{background:rgba(127,163,207,.08)}
+
+@media (max-width:720px){
+  .tabs .tbar button{padding:8px 11px;font-size:11px}
+  .tabs .tpanel{padding:13px 14px}
+  .calc .cinputs{gap:8px 12px}
+  .cont{flex-wrap:wrap}
+  .cont .cmeta{margin-left:0}
+  .demo.frames .dctrl input[type="range"]{max-width:none}
+}

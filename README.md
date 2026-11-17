@@ -281,7 +281,7 @@ R1–R13 假设「有一份可以逐行敲出来的工程产物」。哲学、�
 | `manifest.json` | 唯一事实源：章标题、节标题、文件名、顺序。`html-nav.mjs` 把它编译成 `src/js/nav-data.js`（file:// 不能 fetch，导航只能以 script 形式进页面） |
 | `src/css/theme.css` | 主题：纸纹底、980 版心、海报盒、页边批注、概念卡、演示卡、深色变量。**逐字节复制，不手改** |
 | `src/css/theme-course.css` | 课程覆盖层（可选）：只改变量与点缀，不动骨架 |
-| `src/js/shell.js` | 外壳：轨道、上下节翻页、主题切换、完成标记、批注折叠、练习判分 |
+| `src/js/shell.js` | 外壳：轨道、上下节翻页、主题切换、完成标记、批注折叠、练习判分、标签页、页内计算器、帧序列、继续上次、章节卡与进度 |
 | `src/js/demo.js` | 演示引擎：`StudyDemo.register(id, { tier, steps, state, frame, readout })`，滑块/按钮/时间轴按 `data-act` / `data-param` 自动绑定，状态写进 URL hash（`#t=0.42&lr=1.05`），空格播放、←→ 单步 |
 | `chNN/secNN.html` | 节页：从 `templates/html/section.html` 填占位符。四拍、概念卡、代码块、`你应该看到`、演示卡、练习、小结、来源与时效 |
 | `CREDITS.md` | 图片/视频来源与许可（搜来的素材必须记） |
@@ -290,14 +290,16 @@ R1–R13 假设「有一份可以逐行敲出来的工程产物」。哲学、�
 
 交互是插入件，不是主体：判据是「读的时间明显多于点的时间」；三项准入（不试不会信 / 懂了做不对 / 文字绕不清）、三项禁入（本来就会信 / 长链推理 / 只为好看）；正文删掉所有组件仍要读通。演示分四档：F1 滑块重画、F2 可拖（主力）、F3 预渲染帧、F4 视频（只点缀），每章 1–2 个。
 
+除演示之外，v3.1 起模板里还备好了六类小部件，按内容形态挑，不按“显得丰富”挑：**标签页**（同一件事的两种读法）、**分层提示**（先给方向、后给理由）、**页内计算器**（把数字交给读者改，支持 `ceil/floor/round/abs/sqrt/min/max`）、**继续上次**（首页与章首页都显示上次读到哪一节）、**章节卡**（每章完成数 + 均分，节卡带时长与产物）、**F3 帧序列 / F4 视频**（浏览器里播不稳的东西预渲染成帧或短视频）。
+
 机检：
 
 ```bash
 node assets/study-notes/scripts/html-nav.mjs  "<库>"            # manifest → src/js/nav-data.js
-node assets/study-notes/scripts/html-lint.mjs "<库>"            # HTML01–07 必须 0 error；HTML11–14 是 warning
+node assets/study-notes/scripts/html-lint.mjs "<库>"            # HTML01–07 + 15–18 必须 0 error；HTML11–14、19 是 warning
 ```
 
-`test/fixtures/html-mini/` 是一份能过机检、能双击打开的最小库（1 章 3 节），既可当参考，也是回归夹具；`verify-plugin.mjs` 第 7 节会跑它，并故意注入 `type="module"` 与本机绝对路径，确认这两类错误能被抓住。
+`test/fixtures/html-mini/` 是一份能过机检、能双击打开的最小库（1 章 4 节，第 4 节专门覆盖标签页 / 计算器 / F3 / F4），既可当参考，也是回归夹具；`verify-plugin.mjs` 第 7 节会跑它，并故意注入 `type="module"` 与本机绝对路径，确认这两类错误能被抓住。
 
 ---
 ## 六、老库怎么按新结构逐步迁移

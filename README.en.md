@@ -117,7 +117,7 @@ dsh-study-notes/
 │   └── scripts/
 │       ├── check-library.mjs            # validator (whole library / --only one note / --strict / --replay-to)
 │       ├── run-course.mjs               # really runs 【运行】 commands in replay snapshots; compares or generates outputs and answer snapshots
-│       ├── html-lint.mjs                # HTML library shape lint (HTML01–07 errors, HTML11–14 warnings)
+│       ├── html-lint.mjs                # HTML library shape lint (HTML01–07 + 15–18 errors; 11–14, 19 warnings)
 │       └── html-nav.mjs                 # manifest.json → src/js/nav-data.js (file:// cannot fetch)
 └── test/                  # development self-tests (not part of the runtime)
     ├── verify-plugin.mjs
@@ -126,7 +126,7 @@ dsh-study-notes/
     └── fixtures/
         ├── progressive-ch1/             # code-subject progressive sample: reference for the new structure and regression fixture
         ├── math-ch1/                    # non-code sample (maths derivation notebook): proves the course rules do not require project/
-        └── html-mini/                   # smallest HTML library: 1 chapter, 3 sections; lint and nav regression
+        └── html-mini/                   # smallest HTML library: 1 chapter, 4 sections; lint and nav regression
 ```
 
 ---
@@ -264,7 +264,7 @@ The same course in a different binding: **one page per section**, `index.html` �
 | `manifest.json` | the single source of truth: chapter and section titles, file names, order. `html-nav.mjs` compiles it into `src/js/nav-data.js` (file:// cannot fetch, so navigation has to arrive as a script) |
 | `src/css/theme.css` | theme: paper texture, 980 px measure, poster box, margin notes, concept cards, demo card, dark variables. **Copy byte-for-byte; do not hand-edit** |
 | `src/css/theme-course.css` | optional per-course overlay: variables and accents only, never the skeleton |
-| `src/js/shell.js` | shell: section track, prev/next pager, theme toggle, done marker, collapsible margin notes, exercise grading |
+| `src/js/shell.js` | shell: section track, prev/next pager, theme toggle, done marker, collapsible margin notes, exercise grading, tabs, in-page calculator, frame sequences, "continue where you left off", chapter cards and progress |
 | `src/js/demo.js` | demo engine: `StudyDemo.register(id, { tier, steps, state, frame, readout })`; sliders and buttons bind themselves via `data-act` / `data-param`; state is addressable in the URL hash (`#t=0.42&lr=1.05`); space plays, ←/→ steps |
 | `chNN/secNN.html` | section page, filled from `templates/html/section.html`: four beats, concept cards, code blocks, "你应该看到", demo card, exercises, summary, sources |
 | `CREDITS.md` | provenance and licence for images and media (anything searched for must be recorded) |
@@ -273,14 +273,16 @@ Constraints (`references/html-line.md` is the full contract): **six host protoco
 
 Interaction is an insert, not the body: the test is "reading time clearly exceeds clicking time". Three admissions (you would not believe it without trying / you can follow it and still get it wrong / words alone are muddled) and three rejections (you would believe it anyway / long chains of reasoning / decoration). Delete every component and the prose must still read. Demos come in four tiers — F1 slider redraw, F2 draggable (the workhorse), F3 pre-rendered frames, F4 video (garnish only) — one or two per chapter.
 
+Beyond demos, the v3.1 templates ship six small parts. Pick by what you are writing, not by how rich the page should look: **tabs** (two readings of the same thing), **layered hints** (direction first, reason later), **in-page calculator** (hand the numbers to the reader; supports `ceil/floor/round/abs/sqrt/min/max`), **continue where you left off** (on the library home and each chapter page), **chapter cards** (per-chapter completion and average score, section cards carry duration and artifact), and **F3 frame sequences / F4 video** (pre-render whatever the browser cannot play smoothly).
+
 Machine checks:
 
 ```bash
 node assets/study-notes/scripts/html-nav.mjs  "<library>"            # manifest → src/js/nav-data.js
-node assets/study-notes/scripts/html-lint.mjs "<library>"            # HTML01–07 must be 0 errors; HTML11–14 are warnings
+node assets/study-notes/scripts/html-lint.mjs "<library>"            # HTML01–07 + 15–18 must be 0 errors; 11–14 and 19 are warnings
 ```
 
-`test/fixtures/html-mini/` is a minimal library (1 chapter, 3 sections) that passes lint and opens by double-click; it is both a reference and a regression fixture. Section 7 of `verify-plugin.mjs` runs it and injects `type="module"` and a local absolute path to prove both are caught.
+`test/fixtures/html-mini/` is a minimal library (1 chapter, 4 sections — section 4 covers tabs, calculator, F3 and F4) that passes lint and opens by double-click; it is both a reference and a regression fixture. Section 7 of `verify-plugin.mjs` runs it and injects `type="module"` and a local absolute path to prove both are caught.
 
 ---
 ## 6. 老库怎么按新结构逐步迁移 (migrating an existing library step by step)

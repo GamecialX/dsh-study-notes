@@ -471,7 +471,28 @@ ok('演示引擎写 hash 定位', demoJs.includes('location.hash') || demoJs.inc
 ok('节模板的 demo.js 是同步加载（页面末尾内联脚本要用 StudyDemo）',
   /<script src="\.\.\/src\/js\/demo\.js"><\/script>/u.test(secTpl) && !/demo\.js" defer/u.test(secTpl));
 
-/* 夹具：一个 1 章 3 节的最小 HTML 库，必须过机检。 */
+/* 阶段二（v3.1）：五个新组件必须真的在模板与外壳里 */
+const themeCss = readFileSync(join(HTML_DIR, 'src', 'css', 'theme.css'), 'utf8');
+for (const cls of ['.tabs', '.tbar', '.tpanel', '.hints', '.calc', '.frames', '.dstage video', '.cont']) {
+  ok(`theme.css 定义了 ${cls}`, themeCss.includes(cls));
+}
+for (const fn of ['initTabs', 'initCalc', 'initFrames', 'initContinue', 'evalExpr']) {
+  ok(`shell.js 有 ${fn}`, shellJs.includes('function ' + fn));
+}
+ok('计算器不用 eval（自写表达式求值）', !/[^.\w]eval\s*\(/u.test(shellJs.replace(/evaluate|evalExpr/g, '')) && shellJs.includes('data-var'));
+ok('帧序列外壳读 data-count 与 data-ext', shellJs.includes('data-count') && shellJs.includes('data-ext'));
+ok('计算器支持数学函数（ceil/floor/round/abs/sqrt/min/max）',
+  /ceil:\s*Math\.ceil/u.test(shellJs) && /max:\s*function/u.test(shellJs));
+ok('章首页进度只统计本章（库首页才统计全库）', shellJs.includes('stats(onlyChapter)'));
+for (const token of ['data-tabs', 'data-calc', 'data-var="eta"', 'data-role="calc-out"', 'data-demo="{{eta-decay}}"', 'data-tier="1"']) {
+  ok(`节模板含阶段二组件 ${token}`, secTpl.includes(token));
+}
+ok('章首页与库首页都有「继续上次」位', readFileSync(join(HTML_DIR, 'chapter.html'), 'utf8').includes('data-role="continue"') &&
+  readFileSync(join(HTML_DIR, 'index.html'), 'utf8').includes('data-role="continue"'));
+const lintJs = readFileSync(join(SKILL_DIR, 'scripts', 'html-lint.mjs'), 'utf8');
+for (const rule of ['HTML15', 'HTML16', 'HTML17', 'HTML18', 'HTML19']) ok(`机检含规则 ${rule}`, lintJs.includes(rule));
+
+/* 夹具：一个 1 章 4 节的最小 HTML 库，必须过机检。 */
 ok('夹具 html-mini 存在', existsSync(join(HTML_FIXTURE, 'manifest.json')));
 {
   const outFile = join(tmpdir(), 'dsh-html-lint-' + process.pid + '.txt');
@@ -486,7 +507,7 @@ ok('夹具 html-mini 存在', existsSync(join(HTML_FIXTURE, 'manifest.json')));
   ok('夹具 html-mini 机检 0 error 0 warning',
     status === 0 && out.includes('ERRORS=0') && out.includes('WARNINGS=0') && out.includes('PASS'),
     out.slice(0, 1200));
-  ok('机检统计出 5 页 1 章 3 节', out.includes('pages=5') && out.includes('sections=3'), out.split('\n').find((x) => x.startsWith('SUMMARY')));
+  ok('机检统计出 6 页 1 章 4 节', out.includes('pages=6') && out.includes('sections=4'), out.split('\n').find((x) => x.startsWith('SUMMARY')));
 }
 
 /* 导航：manifest → nav-data.js（file:// 不能 fetch，只能 script） */
@@ -508,13 +529,25 @@ ok('夹具 html-mini 存在', existsSync(join(HTML_FIXTURE, 'manifest.json')));
     const navObj = {};
     new Function('window', nav)(navObj);
     const N = navObj.STUDY_NAV;
-    ok('nav 有 1 章 3 节', N && N.chapters.length === 1 && N.chapters[0].sections.length === 3);
+    ok('nav 有 1 章 4 节', N && N.chapters.length === 1 && N.chapters[0].sections.length === 4);
+    ok('nav 透传时长与产物', N && N.chapters[0].sections.every((x) => typeof x.minutes === 'number' && typeof x.product === 'string'));
     ok('nav 每节带 file 与 lesson', N && N.chapters[0].sections.every((x) => /^ch\d+\/sec\d+\.html$/u.test(x.file) && /^ch\d+\/sec\d+$/u.test(x.lesson)));
     ok('nav 带轨道标题', N && typeof N.track === 'string' && N.track.length > 0);
   } finally { rmSync(box, { recursive: true, force: true }); }
 }
 
-/* 机检必须能抓住典型错误：临时改坏一份夹具，确认 HTML05/HTML06 报错。 */
+/* 夹具第 4 节覆盖阶段二组件：标签页 / 计算器 / 帧序列 / 视频 / 分层提示 */
+{
+  const s4 = readFileSync(join(HTML_FIXTURE, 'ch01', 'sec04.html'), 'utf8');
+  for (const token of ['data-tabs', 'class="tpanel"', 'data-calc', 'data-expr="2 / k - eta"',
+    'data-frames="pend"', 'data-count="6"', 'data-role="frame-range"', '<video controls', 'class="hints"']) {
+    ok(`夹具第 4 节含 ${token}`, s4.includes(token));
+  }
+  ok('夹具第 4 节的帧文件齐全', [1, 2, 3, 4, 5, 6].every((i) => existsSync(join(HTML_FIXTURE, 'src', 'media', 'frames', 'pend-' + i + '.svg'))));
+  ok('夹具第 4 节的视频存在', existsSync(join(HTML_FIXTURE, 'src', 'media', 'demo.mp4')));
+}
+
+/* 机检必须能抓住典型错误：临时改坏一份夹具，确认 HTML05/HTML06/HTML15–HTML18 报错。 */
 {
   const box = mkdtempSync(join(tmpdir(), 'dsh-html-bad-'));
   try {
@@ -533,6 +566,44 @@ ok('夹具 html-mini 存在', existsSync(join(HTML_FIXTURE, 'manifest.json')));
     const out = readFileSync(outFile, 'utf8');
     ok('注入 type=module → HTML06 报错', status === 1 && out.includes('HTML06'), out.slice(0, 1200));
     ok('注入本机绝对路径 → HTML05 报错', out.includes('HTML05'), out.slice(0, 1200));
+
+    // 阶段二规则：标签页对不上 / 计算器变量没声明 / 帧文件缺失 / 视频没有 controls
+    const s4 = join(box, 'ch01', 'sec04.html');
+    let raw4 = readFileSync(s4, 'utf8');
+    raw4 = raw4
+      .replace('data-tab="t-b"', 'data-tab="t-missing"')
+      .replace('data-expr="2 / k - eta"', 'data-expr="2 / k - eta - zz"')
+      .replace('data-count="6"', 'data-count="9"')
+      .replace('<video controls', '<video');
+    writeFileSync(s4, raw4, 'utf8');
+    const outFile2 = join(box, '.lint2.out');
+    const fd2 = openSync(outFile2, 'w');
+    let status2;
+    try {
+      status2 = spawnSync(process.execPath, [join(SKILL_DIR, 'scripts', 'html-lint.mjs'), box],
+        { stdio: ['ignore', fd2, fd2] }).status;
+    } finally { closeSync(fd2); }
+    const out2 = readFileSync(outFile2, 'utf8');
+    ok('标签页指向不存在的面板 → HTML15 报错', status2 === 1 && out2.includes('HTML15'), out2.slice(0, 1600));
+    ok('计算器用了未声明变量 → HTML16 报错', out2.includes('HTML16'), out2.slice(0, 1600));
+    ok('帧数与真实文件对不上 → HTML17 报错', out2.includes('HTML17'), out2.slice(0, 1600));
+    ok('视频没有 controls → HTML18 报错', out2.includes('HTML18'), out2.slice(0, 1600));
+
+    // 不支持的函数名要报 HTML16；<pre> 里的代码样例（python 的 import）不该触发 HTML06
+    const s1 = join(box, 'ch01', 'sec01.html');
+    let raw1 = readFileSync(s1, 'utf8');
+    raw1 = raw1.replace('</body>', '<div class="calc" data-calc data-expr="sin(k)"><input data-var="k" type="number" value="1"><b data-role="calc-out">—</b></div>\n<pre><code>import json</code></pre>\n</body>');
+    writeFileSync(s1, raw1, 'utf8');
+    const outFile3 = join(box, '.lint3.out');
+    const fd3 = openSync(outFile3, 'w');
+    let status3;
+    try {
+      status3 = spawnSync(process.execPath, [join(SKILL_DIR, 'scripts', 'html-lint.mjs'), box],
+        { stdio: ['ignore', fd3, fd3] }).status;
+    } finally { closeSync(fd3); }
+    const out3 = readFileSync(outFile3, 'utf8');
+    ok('不支持的函数 sin() → HTML16 报错', status3 === 1 && out3.includes('HTML16'), out3.slice(0, 1600));
+    ok('<pre> 里的 python import 不触发 HTML06', !/HTML06[\s\S]*import json/u.test(out3), out3.slice(0, 1600));
   } finally { rmSync(box, { recursive: true, force: true }); }
 }
 

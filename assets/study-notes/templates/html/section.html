@@ -79,12 +79,44 @@
         <div class="r"><b>{{η = 1.05}}</b><span>{{乘数 −1.1，符号翻转，左右横跳。}}</span></div>
       </div>
 
+
+      <!-- A 阅读类 · 标签页：同一个地方放两组对照内容（读者自己切）。
+           面板 id 必须与按钮 data-tab 对上；默认选中的那个写 aria-selected="true"。 -->
+      <div class="tabs" data-tabs>
+        <div class="tbar" role="tablist" aria-label="{{两种写法对比}}">
+          <button type="button" role="tab" data-tab="t-a" aria-selected="true" aria-controls="t-a">{{逐行循环}}</button>
+          <button type="button" role="tab" data-tab="t-b" aria-selected="false" aria-controls="t-b">{{向量化}}</button>
+        </div>
+        <div class="tpanel" id="t-a" role="tabpanel">
+          <p>{{写法一：每一次参数更新跑一遍完整的 loss，慢但好懂。}}</p>
+        </div>
+        <div class="tpanel" id="t-b" role="tabpanel" hidden>
+          <p>{{写法二：一次算一批样本的梯度再平均，快，但要多想一步"批"的边界。}}</p>
+        </div>
+      </div>
+
       <div class="beat">做</div>
       <!-- 代码块：.chead 里的标签用【新建】/【修改】/【重构】/【运行】 -->
       <div class="code">
         <div class="chead"><span class="tag">【新建】</span><span class="file">{{project/train.py}}</span><button class="copy" type="button">复制</button></div>
         <pre><code>{{def step(theta, lr):
     return theta - lr * 2.0 * theta}}</code></pre>
+      </div>
+
+
+      <!-- E 工具类 · 页内计算器：让读者自己代入数字。
+           表达式只接受 数字 + - * / ( ) 和下面 data-var 声明的变量名，不执行任意代码。 -->
+      <div class="calc" data-calc data-expr="2 / k - eta">
+        <div class="chead">页内计算器 · 安全步长余量</div>
+        <div class="cbody">
+          <div class="cinputs">
+            <label>η <input data-var="eta" type="number" step="0.01" value="0.1"></label>
+            <label>曲率 k <input data-var="k" type="number" step="0.5" value="2"></label>
+          </div>
+          <div class="cout"><b data-role="calc-out">—</b><span>2/k − η（大于 0 才算安全）</span></div>
+          <p class="cnote">{{把 k 改成 200 再看：同样 η = 0.1，余量立刻变成负的。}}</p>
+          <p class="cnote" data-role="calc-err"></p>
+        </div>
       </div>
 
       <div class="beat">看</div>
@@ -103,6 +135,26 @@
           <h3>{{学习率}}<span>{{η · 每一步迈多远}}</span></h3>
           <p>{{定义与解释。40–120 行是舒适区，别写成一句话名词解释。}}</p>
           <div class="why">{{为什么记这条：少背定义，多记它替你挡掉的错误。}}</div>
+        </div>
+      </div>
+
+
+      <!-- F1 · 参数重画：没有时间轴，只有一个滑块，拖动就重画（steps 写 0）。
+           控制条里不要放播放/上一步/下一步——那是 F2 的东西。 -->
+      <div class="demo" data-demo="{{eta-decay}}" data-tier="1">
+        <div class="dhd"><span>F1 · 参数重画</span><span class="dout" data-role="readout">—</span></div>
+        <div class="dstage">
+          <canvas width="960" height="420" aria-label="{{不同步长下的收敛速度}}"></canvas>
+          <noscript><p class="dcap">{{无脚本静帧：η = 0.1 时每步缩到原来的 0.8 倍。}}</p></noscript>
+        </div>
+        <div class="dside">
+          <div class="k">你应该看到</div>
+          <p>{{把 η 从 0.05 拖到 0.45：柱子越来越快贴近 0。拖过 0.5：符号开始交替，幅度不缩。}}</p>
+        </div>
+        <div class="dctrl">
+          <label>步长 η <input type="range" data-param="lr" min="0.02" max="1.05" step="0.01" value="0.1"></label>
+          <button class="btn" data-act="reset" type="button">重置</button>
+          <span class="hint">只有一个参数：拖动就重画</span>
         </div>
       </div>
 
@@ -132,6 +184,14 @@
       </div>
     </div>
 
+      <!-- F3 帧序列（兜底档）：算不动实时、或需要真实渲染时，把帧预渲染成图片。
+           结构：.demo.frames[data-frames=名称][data-count=帧数][data-dir=相对目录][data-ext=svg|png]，
+           里面放 img[data-frame]、input[data-role="frame-range"]、span[data-role="frame-out"]；
+           帧文件按 名称-1.svg、名称-2.svg … 命名，数量与 data-count 一致。
+           F4 真视频：.demo 里放 .dstage（内含 video[controls][preload=metadata] 与一句 .dcap 说明"这段录的是什么"），右侧 .dside 写"你应该看到"，
+           只在必须看真实录制时用（不能拖时间轴，只作点缀）。两种都要有"你应该看到"。
+      -->
+
     <!-- 练习区：data-points 决定分值；data-answer 是判分依据（别写进正文，读者会看见）。 -->
     <div class="quiz">
       <h3>练习：先自己答</h3>
@@ -142,6 +202,13 @@
         <label><input type="radio" name="q1" value="a">{{A. 单调收敛}}</label>
         <label><input type="radio" name="q1" value="b">{{B. 左右横跳，幅度越来越大}}</label>
         <label><input type="radio" name="q1" value="c">{{C. 停在原地不动}}</label>
+
+        <!-- B 练习类 · 分层提示：卡住了再一层层看，别直接给答案。 -->
+        <div class="hints">
+          <details><summary>提示 1 · {{从乘数想起}}</summary><p>{{每一步都是把 θ 乘以 (1 − 2η)，先看这个乘数的绝对值。}}</p></details>
+          <details><summary>提示 2 · {{代进去算一遍}}</summary><p>{{η = 1.05 时乘数是 −1.1，绝对值大于 1，越乘越大。}}</p></details>
+        </div>
+
       </div>
 
       <div class="q" data-qid="q2" data-type="fill" data-points="30" data-answer="0.4" data-tol="0.02" data-why="{{θ′ = θ(1 − ηk)，k = 2}}">
@@ -252,6 +319,33 @@
       if (Math.abs(tr[cur]) > 1.15 && cur > 3) {
         ctx.fillStyle = C.red; ctx.fillText("已经跑出画面 —— 发散了", pad, pad + 58);
       }
+    }
+  });
+
+  /* F1 只有参数：state 里只放要拖的那个参数；steps 写 0；不要读 __step。 */
+  StudyDemo.register("{{eta-decay}}", {
+    tier: 1,
+    steps: 0,
+    state: { lr: 0.1 },
+    readout: function (s) {
+      var m = 1 - 2 * s.lr;
+      return "乘数 = " + m.toFixed(2) + (Math.abs(m) < 1 ? " · 收敛" : " · 发散");
+    },
+    frame: function (s, env) {
+      var ctx = env.ctx, C = env.palette(), w = env.canvas.width, h = env.canvas.height;
+      var n = 20, pad = 46, m = 1 - 2 * s.lr, mid = h / 2 + 10;
+      ctx.clearRect(0, 0, w, h);
+      ctx.strokeStyle = C.line; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(pad, mid); ctx.lineTo(w - pad, mid); ctx.stroke();
+      var bw = (w - pad * 2) / n * 0.62, gap = (w - pad * 2) / n;
+      for (var t = 0; t < n; t++) {
+        var v = Math.pow(m, t), y = mid - v * (h / 2 - pad);
+        ctx.fillStyle = Math.abs(m) < 1 ? C.blue : C.red;
+        ctx.fillRect(pad + t * gap + (gap - bw) / 2, v >= 0 ? y : mid, bw, Math.abs(v * (h / 2 - pad)));
+      }
+      ctx.font = "600 18px ui-monospace, Consolas, monospace";
+      ctx.fillStyle = C.ink2;
+      ctx.fillText("(1 − 2η)^t　η = " + s.lr.toFixed(2), pad, pad - 10);
     }
   });
 })();

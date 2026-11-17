@@ -18,7 +18,7 @@
  *   </div>
  *
  *   StudyDemo.register("grad-lr", {
- *     steps: 40,                      // t=0..1 映射到 0..steps 步
+ *     steps: 40,                      // t=0..1 映射到 0..steps 步；F1 写 0（无时间轴，只有参数）
  *     state: { t: 0, lr: 0.35, speed: 1 },
  *     frame: function (s, env) { ... env.palette() / env.ctx / env.canvas ... },
  *     readout: function (s) { return "θ = " + ... }        // 可选
@@ -56,7 +56,7 @@
   }
 
   var StudyDemo = global.StudyDemo = {
-    version: "3.0.0",
+    version: "3.1.0",
     register: function (id, cfg) {
       var d = findDef(id);
       if (d) { d.cfg = cfg; if (d.inst) bind(d.inst, cfg); }
@@ -142,6 +142,7 @@
   }
 
   function play(it) {
+    if (!it.def.steps) return;                 /* F1 只有参数重画，没有时间轴 */
     if (it.playing) { stop(it); syncInputs(it); return; }
     if ((it.state.t || 0) >= 1) it.state.t = 0;
     it.playing = true; it.last = 0;

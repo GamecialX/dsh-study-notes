@@ -62,9 +62,11 @@
 2. **引入共享件**（相对路径、经典 script、禁止 module）：
    ```html
    <link rel="stylesheet" href="../src/css/theme.css">
+   <script src="../src/js/nav-data.js"></script>   <!-- html-nav.mjs 生成，必须在 shell.js 之前 -->
+   <script src="../src/js/demo.js"></script>       <!-- 必须同步：页面末尾的 StudyDemo.register 要用 -->
    <script src="../src/js/shell.js" defer></script>
-   <script src="../src/js/demo.js" defer></script>
    ```
+   **demo.js 不能加 defer**：节页末尾的内联脚本在解析期就调用 `StudyDemo.register`，defer 的话那时 `window.StudyDemo` 还不存在，演示会静默失效。
 3. **导航占位**：顶栏 `<nav id="track"></nav>`、页脚 `<div id="pager"></div>`，由 shell.js 填
 4. **进度上报**：完成标记与判分交卷时派发
    `document.dispatchEvent(new CustomEvent("study-progress", { detail: { lesson, kind: "done" | "score", done?, score?, total? } }))`
@@ -107,7 +109,21 @@
 
 **不定量、不设门槛、不统计交互热度**——配额只会逼出凑数的控件。每章最多 **1–2 个 F 演示**（F1/F2 主力，F3 兜底，F4 点缀）。
 
+### 5.1 组件与外壳约定（v3.1 起全部有默认实现）
+
+| 组件 | 标记 | 外壳做的事 |
+|---|---|---|
+| 标签页 | `.tabs[data-tabs]` + `.tbar [role=tab][data-tab=ID]` + `.tpanel#ID` | `initTabs`：点击/←→ 切换，管 `aria-selected` 与 `hidden` |
+| 分层提示 | `.hints` 里若干 `<details><summary>提示 N …</summary>` | 纯原生折叠，无脚本 |
+| 页内计算器 | `.calc[data-calc][data-expr="2 / k - eta"]` + `input[data-var=名字]` + `[data-role=calc-out]` | `initCalc`：自写表达式求值（数字、变量、`+ - * / ( )` 与 `ceil/floor/round/abs/sqrt/min/max`，不用 `eval`）；空值/未声明变量报错到 `[data-role=calc-err]` |
+| F3 帧序列 | `.demo.frames[data-frames=名][data-count=N][data-dir=../src/media/frames/][data-ext=svg]` 内含 `img[data-frame]`、`input[data-role=frame-range]`、`[data-role=frame-out]` | `initFrames`：逐帧切换、拖动条、←→；帧文件按 `名-1.svg … 名-N.svg` |
+| F4 视频 | `.demo` 里 `.dstage` 包 `video[controls][preload=metadata]` + `.dcap` 一句说明 | 原生控件；必须配"你应该看到" |
+| 继续上次 | `[data-role=continue]`（首页全库、章首页加 `data-scope="chapter"`） | `initContinue`：读 `study:last`，显示"继续上次 + 节标题 + 进度" |
+| 章节卡进度 | 由 shell.js 按 nav-data 生成 | 每章 `done/total` 与均分（**章首页的进度只统计本章**，库首页才统计全库）；节卡显示 `minutes`/`product`（manifest 可选字段） |
+
 ## 6. F 演示契约（可定位、可降级、可测）
+
+**四档**：F1 参数重画（只有滑块，`steps: 0`，不要播放键）｜F2 canvas/SVG 播放-步进-拖时间轴（主力）｜F3 预渲染帧序列 + 拖动条（兜底）｜F4 真视频（只点缀，不能真拖）。
 
 ```html
 <div class="demo" data-demo="grad-lr" data-tier="F2">
@@ -137,14 +153,23 @@ StudyDemo.register("grad-lr", {
 - `HTML03` 页面相对链接、`src`、`href`、`<img>`、`<video>` 目标存在
 - `HTML04` 无 CDN / 外部字体 / 远程脚本（资源属性里出现 `http(s)://` 即报）
 - `HTML05` 无本机绝对路径（`[A-Za-z]:\\`、`/Users/`、`file:///`）
-- `HTML06` 无 `type="module"`、`import `、`fetch(`/`XMLHttpRequest` 读本地文件、`new Worker`
+- `HTML06` 无 `type="module"`、ES `import … from`、`fetch(`/`XMLHttpRequest` 读本地文件、`new Worker`。**只扫可执行部分**：`<pre>` 里的代码样例不算（Python 的 `import json` 不会误报），普通 `import 模块名`（没有 `from`）也不报
 - `HTML07` 有 `data-lesson`/`data-track`/`data-title`，且 `data-lesson` 与 manifest 对得上
+
+**L0 结构（v3.1 新增，error）**
+- `HTML15` 标签页：每个 `data-tab` 都有同名 `.tpanel#id`；同时只有一个面板不带 `hidden`
+- `HTML16` 计算器：`data-expr` 只用白名单字符（函数限 `ceil/floor/round/abs/sqrt/min/max`，其它函数名报错）；每个变量都有 `data-var` 输入框；有 `[data-role=calc-out]`
+- `HTML17` 帧序列：`data-count` 与真实帧文件一一对应；有 `[data-role=frame-range]`
+- `HTML18` 视频：`<video>` 带 `controls`；有 `.dcap` 与"你应该看到"
 
 **L1 节内弱检（warning）**
 - `HTML11` 有 `<h1>`、`id="pager"`、`id="track"`
 - `HTML12` 概念编号节内唯一；有练习区（`.quiz`/`.practice`）；理论线有来源区（`.sources`）
 - `HTML13` 正文过短报警（去标签 < 400 字 = 多半没写）
 - `HTML14` 除段落/代码块外没有任何组件 → 提示"本节接近纯文字"（**不阻断、不升 error**）
+- `HTML19` 体积软线：单页 > 800 KB、帧序列总量 > 5 MB、单页内联 SVG > 6 张
+
+`--strict` 把 warning 当 error（`HTML14` 除外），用于交付前自检。
 
 **L2 人工/自检**：`quality-gates.md` + 理论课两关（`theory-line.md`）+ F 演示"值得停下的点"
 

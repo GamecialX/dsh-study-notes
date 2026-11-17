@@ -37,7 +37,10 @@ const nav = {
       id: s.id,
       lesson: s.lesson || (ch.id + "/" + s.id),
       title: s.title || "",
-      file: s.file
+      file: s.file,
+      minutes: s.minutes || 0,
+      product: s.product || "",
+      summary: s.summary || ""
     }))
   }))
 };
