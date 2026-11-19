@@ -371,3 +371,35 @@ html[data-theme="dark"] .hints details{background:rgba(127,163,207,.08)}
   .cont .cmeta{margin-left:0}
   .demo.frames .dctrl input[type="range"]{max-width:none}
 }
+/* ============================================================
+   演示卡宽幅（v3.2.0）
+   症状：宽屏上正文 980 定宽，演示卡是「画布 + 330 说明栏」两列，
+         画布只剩约 619px；而演示脚本按 960 坐标画字（17px），
+         被压到约 11px，读者只能放大浏览器。
+   做法：宽屏（≥1081px）让演示卡突破正文栏、居中到视口宽度
+         （上限 1440），说明栏仍在右侧 330，画布接近 1:1；
+         开着页边批注时说明栏落到画布下方，画布仍有约 690。
+   可调：在 theme-course.css 里改 --demo-w（例：--demo-w: 1200px）收窄；
+         想把某张卡收回去，也可在覆盖层给该卡 width:auto;margin:40px 0。
+   ============================================================ */
+@media (min-width:1081px){
+  body:not([data-notes="on"]) .demo{
+    --demo-w: min(1440px, calc(100vw - 48px));
+    width: var(--demo-w);
+    margin-left: calc((100% - var(--demo-w)) / 2);
+    margin-right: calc((100% - var(--demo-w)) / 2);
+  }
+  body[data-notes="on"] .demo{grid-template-columns:minmax(0,1fr)}
+  body[data-notes="on"] .demo .dhd{grid-column:1}
+  body[data-notes="on"] .demo .dstage{border-right:0;border-bottom:1.5px solid var(--line)}
+  body[data-notes="on"] .demo .dside{border-left:0;border-top:0;padding:14px 20px}
+  body[data-notes="on"] .demo .dctrl{grid-column:1}
+  .demo .dside p,.demo .dside ol{font-size:14.5px}
+  .dctrl input[type=range]{width:180px}
+  .demo.frames .dstage img{max-height:620px}
+  .demo .dstage video{max-height:640px}
+}
+@media print{
+  .demo{width:auto !important;margin-left:0 !important;margin-right:0 !important}
+}
+

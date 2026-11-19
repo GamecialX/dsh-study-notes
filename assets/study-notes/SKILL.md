@@ -294,6 +294,7 @@ node <skill>/scripts/run-course.mjs "<根>" --write                           # 
 node <skill>/scripts/html-nav.mjs "<根>"                                     # HTML 线：manifest → src/js/nav-data.js
 node <skill>/scripts/html-lint.mjs "<根>"                                    # HTML 线：形状机检（L0）
 node <skill>/scripts/html-lint.mjs "<根>" --strict                           # HTML 线：warning 也当 error（HTML14 除外）
+node <skill>/scripts/migrate-theme.mjs --lib "<根>"                          # 老 HTML 库：换 v3.2 宽幅主题（先备份；v3.2 前建的库跑一次）
 ```
 
 `check-library.mjs` 检查：命名、frontmatter、链接与图片（文件、锚点、空链接、越界）、Obsidian 专有语法与旧式标注、块级公式定界符、练习 3–5 题、篇幅与标注块预算、旧式概念编号残留、代码/输出绑定、速查与跨章回顾、`notes_data.js` 与文件和题目的一致性、测试分值、残留占位符，以及课程线规则 [R1]–[R13]：节内顺序与每步三要素、承接与钩子、概念写法、代码块标签与照做重放、答案区同构、未来版本泄漏、`code/` 里动手、章末通跑与项目地图、notebook、学时、本机绝对路径、`\mathbb`（Typora 1.14 渲染不了）；另外以 warning 报讲解线规则 [T1]–[T5]（每步先讲后做、概念长度、先想一下、回看、讲解与代码比例）。理论线的 L1–L8 **不在脚本里检查**（理论课没有代码与输出可绑定），交付前按 `references/quality-gates.md` 人工过。
@@ -320,7 +321,7 @@ node <skill>/scripts/html-lint.mjs "<根>" --strict                           # 
 ├─ manifest.json         唯一事实源：章节标题、文件名、节顺序
 ├─ chNN/index.html       章首页：本节清单 + 本章产物
 ├─ chNN/secNN.html       节页（一节一页；只有"跨节共享状态"才整章单页）
-├─ src/css/theme.css     主题（逐字节复制 templates/html/src/css/theme.css）
+├─ src/css/theme.css     主题（逐字节复制 templates/html/src/css/theme.css；v3.2 起宽屏下演示卡突破 980 版心，老库跑 migrate-theme.mjs 换新）
 ├─ src/css/theme-course.css  课程覆盖层（可选，只许改变量/点缀/插槽）
 ├─ src/js/nav-data.js    html-nav.mjs 生成，别手写
 ├─ src/js/shell.js       外壳（轨道、翻页、主题、完成标记、批注、判分）
@@ -400,7 +401,7 @@ F3 与 F4 的完整写法见模板 `section.html` 里的注释块（F3：`.demo.
 
 ### 8.5 校验
 
-- `node <skill>/scripts/html-lint.mjs "<根>"`：**error 级** HTML01–07（manifest 合法、manifest↔磁盘一致、相对链接存在、无外链、无本机绝对路径、无 module/fetch/Worker、`data-lesson` 对得上；HTML06 只扫可执行部分，`<pre>` 里的代码样例不算）+ HTML15–18（标签页面板对不上、计算器变量未声明、帧数与文件不符、视频无 controls）**必须 0 error**；**warning 级** HTML11–14（h1/#pager/#track、概念编号唯一、正文体量、组件存在）与 HTML19（单页 > 800 KB / 帧总量 > 5 MB / 内联 SVG > 6 张）逐条判断。`--strict` 把 warning 当 error（HTML14 除外），交付前跑一次。
+- `node <skill>/scripts/html-lint.mjs "<根>"`：**error 级** HTML01–07（manifest 合法、manifest↔磁盘一致、相对链接存在、无外链、无本机绝对路径、无 module/fetch/Worker、`data-lesson` 对得上；HTML06 只扫可执行部分，`<pre>` 里的代码样例不算）+ HTML15–18（标签页面板对不上、计算器变量未声明、帧数与文件不符、视频无 controls）**必须 0 error**；**warning 级** HTML11–14（h1/#pager/#track、概念编号唯一、正文体量、组件存在）、HTML19（单页 > 800 KB / 帧总量 > 5 MB / 内联 SVG > 6 张）与 HTML20（主题快照是 v3.2 之前的拷贝，宽屏演示画布只有约 620px → 跑 `migrate-theme.mjs`）逐条判断。`--strict` 把 warning 当 error（HTML14 除外），交付前跑一次。
 - 浏览器实开：库首页 → 章 → 节，轨道高亮对、上下节能走、演示能播能拖、交卷有分、刷新进度在。
 - 体积软线：单页 > 800 KB 改用"拆数据文件 + 本地服务器"；内联 SVG > 6 张移到 `src/image/`。
 

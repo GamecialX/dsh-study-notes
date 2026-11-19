@@ -117,7 +117,8 @@ dsh-study-notes/
 │   └── scripts/
 │       ├── check-library.mjs            # validator (whole library / --only one note / --strict / --replay-to)
 │       ├── run-course.mjs               # really runs 【运行】 commands in replay snapshots; compares or generates outputs and answer snapshots
-│       ├── html-lint.mjs                # HTML library shape lint (HTML01–07 + 15–18 errors; 11–14, 19 warnings)
+│       ├── html-lint.mjs                # HTML library shape lint (HTML01–07 + 15–18 errors; 11–14, 19, 20 warnings)
+│       ├── migrate-theme.mjs            # migrate an older HTML library to the v3.2 wide demo theme (backs up first)
 │       └── html-nav.mjs                 # manifest.json → src/js/nav-data.js (file:// cannot fetch)
 └── test/                  # development self-tests (not part of the runtime)
     ├── verify-plugin.mjs
@@ -262,7 +263,7 @@ The same course in a different binding: **one page per section**, `index.html` �
 | Piece | Purpose |
 |---|---|
 | `manifest.json` | the single source of truth: chapter and section titles, file names, order. `html-nav.mjs` compiles it into `src/js/nav-data.js` (file:// cannot fetch, so navigation has to arrive as a script) |
-| `src/css/theme.css` | theme: paper texture, 980 px measure, poster box, margin notes, concept cards, demo card, dark variables. **Copy byte-for-byte; do not hand-edit** |
+| `src/css/theme.css` | theme: paper texture, 980 px measure, poster box, margin notes, concept cards, demo card, dark variables. **Copy byte-for-byte; do not hand-edit**. Since v3.2 the demo card breaks out of the 980 measure on wide screens (canvas about 1030 instead of 620); older libraries migrate with `migrate-theme.mjs` |
 | `src/css/theme-course.css` | optional per-course overlay: variables and accents only, never the skeleton |
 | `src/js/shell.js` | shell: section track, prev/next pager, theme toggle, done marker, collapsible margin notes, exercise grading, tabs, in-page calculator, frame sequences, "continue where you left off", chapter cards and progress |
 | `src/js/demo.js` | demo engine: `StudyDemo.register(id, { tier, steps, state, frame, readout })`; sliders and buttons bind themselves via `data-act` / `data-param`; state is addressable in the URL hash (`#t=0.42&lr=1.05`); space plays, ←/→ steps |
@@ -279,7 +280,8 @@ Machine checks:
 
 ```bash
 node assets/study-notes/scripts/html-nav.mjs  "<library>"            # manifest → src/js/nav-data.js
-node assets/study-notes/scripts/html-lint.mjs "<library>"            # HTML01–07 + 15–18 must be 0 errors; 11–14 and 19 are warnings
+node assets/study-notes/scripts/html-lint.mjs "<library>"            # HTML01–07 + 15–18 must be 0 errors; 11–14, 19 and 20 are warnings
+node assets/study-notes/scripts/migrate-theme.mjs --lib "<library>"  # migrate a pre-v3.2 HTML library to the wide demo theme (backs up first)
 ```
 
 `test/fixtures/html-mini/` is a minimal library (1 chapter, 4 sections — section 4 covers tabs, calculator, F3 and F4) that passes lint and opens by double-click; it is both a reference and a regression fixture. Section 7 of `verify-plugin.mjs` runs it and injects `type="module"` and a local absolute path to prove both are caught.

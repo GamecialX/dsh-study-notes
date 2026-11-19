@@ -236,6 +236,14 @@ for (const page of pages) {
   if (svgCount > 6) warn("HTML19", file, "单页内联 SVG " + svgCount + " 张（>6），建议移到 src/image/*.svg 外链");
 }
 
+/* ---------- HTML20 主题快照：老库的 theme.css 还是 v3.2 之前 ---------- */
+const themePath = join(root, "src", "css", "theme.css");
+if (!existsSync(themePath)) {
+  warn("HTML20", "src/css/theme.css", "缺少 src/css/theme.css，页面会退化成无主题");
+} else if (!read(themePath).includes("--demo-w")) {
+  warn("HTML20", "src/css/theme.css", "主题是 v3.2 之前的快照：宽屏上演示画布只有约 620px，读者得放大才能看清。迁移：node <skill>/scripts/migrate-theme.mjs --lib \"<库根目录>\"（会先备份 theme.css）");
+}
+
 /* ---------- HTML02 反查：磁盘上有、manifest 里没有 ---------- */
 if (manifest) {
   const allowed = new Set([...manifestFiles].map((f) => f.split("\\").join("/")));

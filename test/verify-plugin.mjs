@@ -454,7 +454,8 @@ for (const rel of [
   join('templates', 'html', 'src', 'js', 'demo.js'),
   join('templates', 'html', 'src', 'js', 'shell.js'),
   join('scripts', 'html-lint.mjs'),
-  join('scripts', 'html-nav.mjs')
+  join('scripts', 'html-nav.mjs'),
+  join('scripts', 'migrate-theme.mjs')
 ]) ok(`存在 ${rel}`, existsSync(join(SKILL_DIR, rel)));
 
 const secTpl = readFileSync(join(HTML_DIR, 'section.html'), 'utf8');
@@ -490,7 +491,8 @@ for (const token of ['data-tabs', 'data-calc', 'data-var="eta"', 'data-role="cal
 ok('章首页与库首页都有「继续上次」位', readFileSync(join(HTML_DIR, 'chapter.html'), 'utf8').includes('data-role="continue"') &&
   readFileSync(join(HTML_DIR, 'index.html'), 'utf8').includes('data-role="continue"'));
 const lintJs = readFileSync(join(SKILL_DIR, 'scripts', 'html-lint.mjs'), 'utf8');
-for (const rule of ['HTML15', 'HTML16', 'HTML17', 'HTML18', 'HTML19']) ok(`机检含规则 ${rule}`, lintJs.includes(rule));
+for (const rule of ['HTML15', 'HTML16', 'HTML17', 'HTML18', 'HTML19', 'HTML20']) ok(`机检含规则 ${rule}`, lintJs.includes(rule));
+ok('模板主题含宽幅演示卡变量 --demo-w', themeCss.includes('--demo-w'));
 
 /* 夹具：一个 1 章 4 节的最小 HTML 库，必须过机检。 */
 ok('夹具 html-mini 存在', existsSync(join(HTML_FIXTURE, 'manifest.json')));
@@ -508,6 +510,47 @@ ok('夹具 html-mini 存在', existsSync(join(HTML_FIXTURE, 'manifest.json')));
     status === 0 && out.includes('ERRORS=0') && out.includes('WARNINGS=0') && out.includes('PASS'),
     out.slice(0, 1200));
   ok('机检统计出 6 页 1 章 4 节', out.includes('pages=6') && out.includes('sections=4'), out.split('\n').find((x) => x.startsWith('SUMMARY')));
+}
+
+/* 老库主题快照：HTML20 报警 + migrate-theme 能修好（v3.2） */
+{
+  const box = mkdtempSync(join(tmpdir(), 'dsh-theme-mig-'));
+  try {
+    cpSync(HTML_FIXTURE, box, { recursive: true });
+    const themeFile = join(box, 'src', 'css', 'theme.css');
+    writeFileSync(themeFile, '/* old theme */\n.wrap{max-width:980px;margin:0 auto}\n', 'utf8');
+
+    const runLint = () => {
+      const f = join(box, '.lint.out');
+      const fd = openSync(f, 'w');
+      let status;
+      try {
+        status = spawnSync(process.execPath, [join(SKILL_DIR, 'scripts', 'html-lint.mjs'), box],
+          { stdio: ['ignore', fd, fd] }).status;
+      } finally { closeSync(fd); }
+      const text = readFileSync(f, 'utf8');
+      rmSync(f, { force: true });
+      return { status, text };
+    };
+
+    const stale = runLint();
+    ok('旧主题快照 → 机检报 HTML20 warning（仍是 0 error）',
+      stale.status === 0 && stale.text.includes('HTML20') && stale.text.includes('WARNINGS=1'), stale.text.slice(0, 900));
+
+    const mig = spawnSync(process.execPath, [join(SKILL_DIR, 'scripts', 'migrate-theme.mjs'), '--lib', box],
+      { encoding: 'utf8' });
+    ok('migrate-theme 换好主题并备份', mig.status === 0 && mig.stdout.includes('已替换') && readFileSync(themeFile, 'utf8').includes('--demo-w'),
+      (mig.stdout || '') + (mig.stderr || ''));
+
+    const after = runLint();
+    ok('迁移后机检 0 warning', after.status === 0 && after.text.includes('ERRORS=0') && after.text.includes('WARNINGS=0'), after.text.slice(0, 900));
+
+    const again = spawnSync(process.execPath, [join(SKILL_DIR, 'scripts', 'migrate-theme.mjs'), '--lib', box],
+      { encoding: 'utf8' });
+    ok('migrate-theme 幂等（第二次无需改动）', again.status === 0 && again.stdout.includes('无需改动'), again.stdout);
+  } finally {
+    rmSync(box, { recursive: true, force: true });
+  }
 }
 
 /* 导航：manifest → nav-data.js（file:// 不能 fetch，只能 script） */

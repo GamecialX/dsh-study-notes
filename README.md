@@ -128,7 +128,8 @@ dsh-study-notes/
 │   └── scripts/
 │       ├── check-library.mjs            # 校验器（全库 / --only 单篇 / --strict / --replay-to 照做重放）
 │       ├── run-course.mjs               # 在重放快照里真实运行【运行】命令，比对或生成输出与答案快照
-│       ├── html-lint.mjs                # HTML 库形状机检（HTML01–07 error，HTML11–14 warning）
+│       ├── html-lint.mjs                # HTML 库形状机检（HTML01–07、15–18 error；HTML11–14、19、20 warning）
+│       ├── migrate-theme.mjs            # 老 HTML 库换 v3.2 宽幅主题（自动备份，顺带清旧补丁/旧折行规则）
 │       └── html-nav.mjs                 # manifest.json → src/js/nav-data.js（file:// 不能 fetch）
 └── test/                  # 开发自测（不参与运行时）
     ├── verify-plugin.mjs
@@ -279,7 +280,7 @@ R1–R13 假设「有一份可以逐行敲出来的工程产物」。哲学、�
 | 部件 | 说明 |
 |---|---|
 | `manifest.json` | 唯一事实源：章标题、节标题、文件名、顺序。`html-nav.mjs` 把它编译成 `src/js/nav-data.js`（file:// 不能 fetch，导航只能以 script 形式进页面） |
-| `src/css/theme.css` | 主题：纸纹底、980 版心、海报盒、页边批注、概念卡、演示卡、深色变量。**逐字节复制，不手改** |
+| `src/css/theme.css` | 主题：纸纹底、980 版心、海报盒、页边批注、概念卡、演示卡、深色变量。**逐字节复制，不手改**。v3.2 起演示卡在宽屏上突破版心（画布约 1030 而不是 620），老库用 `migrate-theme.mjs` 换新 |
 | `src/css/theme-course.css` | 课程覆盖层（可选）：只改变量与点缀，不动骨架 |
 | `src/js/shell.js` | 外壳：轨道、上下节翻页、主题切换、完成标记、批注折叠、练习判分、标签页、页内计算器、帧序列、继续上次、章节卡与进度 |
 | `src/js/demo.js` | 演示引擎：`StudyDemo.register(id, { tier, steps, state, frame, readout })`，滑块/按钮/时间轴按 `data-act` / `data-param` 自动绑定，状态写进 URL hash（`#t=0.42&lr=1.05`），空格播放、←→ 单步 |
@@ -296,7 +297,8 @@ R1–R13 假设「有一份可以逐行敲出来的工程产物」。哲学、�
 
 ```bash
 node assets/study-notes/scripts/html-nav.mjs  "<库>"            # manifest → src/js/nav-data.js
-node assets/study-notes/scripts/html-lint.mjs "<库>"            # HTML01–07 + 15–18 必须 0 error；HTML11–14、19 是 warning
+node assets/study-notes/scripts/html-lint.mjs "<库>"            # HTML01–07 + 15–18 必须 0 error；HTML11–14、19、20 是 warning
+node assets/study-notes/scripts/migrate-theme.mjs --lib "<库>"  # 老 HTML 库（v3.2 之前建的）换宽幅主题，自动备份
 ```
 
 `test/fixtures/html-mini/` 是一份能过机检、能双击打开的最小库（1 章 4 节，第 4 节专门覆盖标签页 / 计算器 / F3 / F4），既可当参考，也是回归夹具；`verify-plugin.mjs` 第 7 节会跑它，并故意注入 `type="module"` 与本机绝对路径，确认这两类错误能被抓住。

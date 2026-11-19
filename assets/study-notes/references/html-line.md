@@ -81,6 +81,8 @@
 - 颜色/字体/间距全部走 CSS 变量，集中在 `theme.css` 的 `:root` 与 `html[data-theme="dark"]`
 - 覆盖层 `theme-course.css` **只许**改变量 + 少量插槽样式，不得复制整份组件样式
 - 变量契约（shell.js 与组件依赖，**不得改名**）：`--paper --paper-2 --ink --ink-2 --ink-3 --red --blue --kraft --line`；字体 `--serif --sans --mono`
+- **演示卡宽幅（v3.2）**：宽屏（≥1081px）下 `.demo` 突破 980 版心、居中到视口宽（上限 1440），说明栏仍在右侧 330，画布接近 1:1；开着页边批注时说明栏落到画布下方。宽度用 `--demo-w` 调（在 `theme-course.css` 里覆盖即可），某张卡想收回去就给它 `width:auto;margin:40px 0`
+- **老库换主题**：`theme.css` 建库时逐字节复制，插件升级不会改写老库；v3.2 之前建的库跑 `node <skill>/scripts/migrate-theme.mjs --lib "<库>"`（自动备份，顺带删掉早期手贴的「演示卡放大补丁」并注释掉旧 `.demo.demo-wide` 折行规则）
 
 ## 5. 交互方向（文字为主，组件为辅）
 
@@ -168,6 +170,7 @@ StudyDemo.register("grad-lr", {
 - `HTML13` 正文过短报警（去标签 < 400 字 = 多半没写）
 - `HTML14` 除段落/代码块外没有任何组件 → 提示"本节接近纯文字"（**不阻断、不升 error**）
 - `HTML19` 体积软线：单页 > 800 KB、帧序列总量 > 5 MB、单页内联 SVG > 6 张
+- `HTML20` 主题快照：库里的 `src/css/theme.css` 缺 `--demo-w`（v3.2 之前的拷贝）→ 宽屏上演示画布只有约 620px；跑 `scripts/migrate-theme.mjs --lib "<库>"` 换新（自动备份）
 
 `--strict` 把 warning 当 error（`HTML14` 除外），用于交付前自检。
 
